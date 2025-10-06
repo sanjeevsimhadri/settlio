@@ -7,7 +7,7 @@ import { expensesAPI, Expense } from '../../services/expensesAPI';
 import { balancesAPI, GroupSummary } from '../../services/balancesAPI';
 import GroupExpenses from '../expenses/GroupExpenses';
 import GroupBalances from '../balances/GroupBalances';
-import { Card, LoadingButton, Input, Badge, Avatar, Alert } from '../ui';
+import { Card, LoadingButton, Input, Badge, Alert } from '../ui';
 import { RecordHeader, CreationInfo } from '../common/CreationInfo';
 import { useAuth } from '../../contexts/AuthContext';
 import './Groups.css';
@@ -186,7 +186,6 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
             createdAt={group.createdAt}
             createdBy={group.createdBy || group.admin}
             users={group.members.map(m => m.userId).filter((user): user is NonNullable<typeof user> => user !== null)}
-            showAvatar={true}
           />
         </Card>
       </div>
@@ -320,7 +319,7 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
         {activeTab === 'members' && (
           <div className="members-tab">
             <div className="members-header">
-              <h3>Group Members</h3>
+              <h3>👥 Group Members</h3>
               <LoadingButton
                 variant="primary"
                 onClick={() => setIsAddingMember(true)}
@@ -424,12 +423,18 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                     <div className="member-info">
                       <div className="member-name">
                         {displayName}
-                        {member.status === 'invited' && (
-                          <span className="member-status"> (Invited)</span>
-                        )}
                       </div>
                       <div className="member-email">{displayEmail}</div>
-                      <div className="member-balance">
+                      <div className={`member-balance ${
+                        (() => {
+                          const balanceAmount = groupSummary 
+                            ? (groupSummary.memberBalances.find(balance => balance.user.email === displayEmail)?.balance || 0)
+                            : 0;
+                          if (balanceAmount > 0) return 'positive';
+                          if (balanceAmount < 0) return 'negative';
+                          return 'zero';
+                        })()
+                      }`}>
                         Balance: ₹{
                           groupSummary 
                             ? (groupSummary.memberBalances.find(balance => balance.user.email === displayEmail)?.balance || 0).toFixed(2)
