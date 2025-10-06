@@ -6,6 +6,7 @@ import { expensesAPI, CreateExpenseData, SplitAmongMember } from '../../services
 import { groupsAPI, Group, GroupMember } from '../../services/groupsAPI';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, ErrorMessage } from '../common';
+import { LoadingButton, Alert, Input, TextArea, Modal, Card, Select } from '../ui';
 import './AddExpense.css';
 
 interface AddExpenseProps {
@@ -179,126 +180,111 @@ const AddExpense: React.FC<AddExpenseProps> = ({ groupId, onSuccess, onCancel })
 
   if (loading) {
     return (
-      <div className="add-expense-modal">
-        <div className="modal-content">
-          <LoadingSpinner message="Loading group details..." />
-        </div>
-      </div>
+      <Modal
+        isOpen={true}
+        onClose={onCancel}
+        title="Add Expense"
+        size="large"
+      >
+        <LoadingSpinner message="Loading group details..." />
+      </Modal>
     );
   }
 
   if (!group) {
     return (
-      <div className="add-expense-modal">
-        <div className="modal-content">
-          <ErrorMessage 
-            message={error || 'Failed to load group details'} 
-            onRetry={() => window.location.reload()}
-          />
-        </div>
-      </div>
+      <Modal
+        isOpen={true}
+        onClose={onCancel}
+        title="Add Expense"
+        size="large"
+      >
+        <ErrorMessage 
+          message={error || 'Failed to load group details'} 
+          onRetry={() => window.location.reload()}
+        />
+      </Modal>
     );
   }
 
   return (
-    <div className="add-expense-modal">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>Add Expense</h2>
-          <p>Add a new expense to {group.name}</p>
-          <button 
-            className="close-button" 
-            onClick={onCancel}
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      title="Add Expense"
+      size="large"
+      className="add-expense-modal"
+    >
+      <div className="modal-description">
+        <p>Add a new expense to <strong>{group.name}</strong></p>
+      </div>
+
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          className="expense-error-alert"
+        />
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="add-expense-form">
+        {/* Description */}
+        <Input
+          label="Description *"
+          type="text"
+          {...register('description')}
+          error={errors.description?.message}
+          placeholder="What was this expense for?"
+          disabled={submitting}
+          fullWidth
+        />
+
+        {/* Amount and Currency */}
+        <div className="form-row">
+          <Input
+            label="Amount *"
+            type="number"
+            step="0.01"
+            min="0"
+            {...register('amount', { valueAsNumber: true })}
+            error={errors.amount?.message}
+            placeholder="0.00"
             disabled={submitting}
+            className="amount-input"
+          />
+
+          <Select
+            label="Currency *"
+            {...register('currency')}
+            error={errors.currency?.message}
+            disabled={submitting}
+            className="currency-select"
           >
-            ×
-          </button>
+            <option value="INR">INR (₹)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="CAD">CAD (C$)</option>
+            <option value="AUD">AUD (A$)</option>
+          </Select>
         </div>
 
-        {error && (
-          <div className="alert error">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="add-expense-form">
-          {/* Description */}
-          <div className="form-group">
-            <label htmlFor="description">Description *</label>
-            <input
-              id="description"
-              type="text"
-              {...register('description')}
-              className={`form-input ${errors.description ? 'error' : ''}`}
-              placeholder="What was this expense for?"
-              disabled={submitting}
-            />
-            {errors.description && (
-              <span className="error-message">{errors.description.message}</span>
-            )}
-          </div>
-
-          {/* Amount and Currency */}
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="amount">Amount *</label>
-              <input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                {...register('amount', { valueAsNumber: true })}
-                className={`form-input ${errors.amount ? 'error' : ''}`}
-                placeholder="0.00"
-                disabled={submitting}
-              />
-              {errors.amount && (
-                <span className="error-message">{errors.amount.message}</span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="currency">Currency *</label>
-              <select
-                id="currency"
-                {...register('currency')}
-                className={`form-select ${errors.currency ? 'error' : ''}`}
-                disabled={submitting}
-              >
-                <option value="INR">INR (₹)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="CAD">CAD (C$)</option>
-                <option value="AUD">AUD (A$)</option>
-              </select>
-              {errors.currency && (
-                <span className="error-message">{errors.currency.message}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Paid By */}
-          <div className="form-group">
-            <label htmlFor="paidByEmail">Paid By *</label>
-            <select
-              id="paidByEmail"
-              {...register('paidByEmail')}
-              className={`form-select ${errors.paidByEmail ? 'error' : ''}`}
-              disabled={submitting}
-            >
-              <option value="">Select who paid</option>
-              {group.members.map((member) => (
-                <option key={member._id} value={member.email}>
-                  {getDisplayName(member)}
-                  {member.status === 'invited' && ' (Pending)'}
-                </option>
-              ))}
-            </select>
-            {errors.paidByEmail && (
-              <span className="error-message">{errors.paidByEmail.message}</span>
-            )}
-          </div>
+        {/* Paid By */}
+        <Select
+          label="Paid By *"
+          {...register('paidByEmail')}
+          error={errors.paidByEmail?.message}
+          disabled={submitting}
+          fullWidth
+        >
+          <option value="">Select who paid</option>
+          {group.members.map((member) => (
+            <option key={member._id} value={member.email}>
+              {getDisplayName(member)}
+              {member.status === 'invited' && ' (Pending)'}
+            </option>
+          ))}
+        </Select>
 
           {/* Split Among */}
           <div className="form-group">
@@ -358,65 +344,51 @@ const AddExpense: React.FC<AddExpenseProps> = ({ groupId, onSuccess, onCancel })
             )}
           </div>
 
-          {/* Date */}
-          <div className="form-group">
-            <label htmlFor="date">Date *</label>
-            <input
-              id="date"
-              type="date"
-              {...register('date')}
-              className={`form-input ${errors.date ? 'error' : ''}`}
-              disabled={submitting}
-            />
-            {errors.date && (
-              <span className="error-message">{errors.date.message}</span>
-            )}
-          </div>
+        {/* Date */}
+        <Input
+          label="Date *"
+          type="date"
+          {...register('date')}
+          error={errors.date?.message}
+          disabled={submitting}
+          fullWidth
+        />
 
-          {/* Comments */}
-          <div className="form-group">
-            <label htmlFor="comments">Comments</label>
-            <textarea
-              id="comments"
-              {...register('comments')}
-              className={`form-input ${errors.comments ? 'error' : ''}`}
-              placeholder="Optional notes about this expense"
-              rows={3}
-              disabled={submitting}
-            />
-            {errors.comments && (
-              <span className="error-message">{errors.comments.message}</span>
-            )}
-          </div>
+        {/* Comments */}
+        <TextArea
+          label="Comments"
+          {...register('comments')}
+          error={errors.comments?.message}
+          placeholder="Optional notes about this expense"
+          rows={3}
+          disabled={submitting}
+          fullWidth
+        />
 
-          {/* Form Actions */}
-          <div className="form-actions">
-            <button
-              type="button"
-              className="button secondary"
-              onClick={onCancel}
-              disabled={submitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="button primary"
-              disabled={submitting || !watchedSplitAmong?.length}
-            >
-              {submitting ? (
-                <>
-                  <LoadingSpinner size="small" />
-                  Creating...
-                </>
-              ) : (
-                'Create Expense'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Form Actions */}
+        <div className="form-actions">
+          <LoadingButton
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            disabled={submitting}
+            className="cancel-button"
+          >
+            Cancel
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            variant="primary"
+            isLoading={submitting}
+            disabled={submitting || !watchedSplitAmong?.length}
+            loadingText="Creating..."
+            className="submit-button"
+          >
+            Create Expense
+          </LoadingButton>
+        </div>
+      </form>
+    </Modal>
   );
 };
 

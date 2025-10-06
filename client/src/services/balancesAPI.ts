@@ -61,9 +61,12 @@ export interface Settlement {
     email: string;
   };
   createdAt: string;
+  createdBy?: string | { _id: string; username: string; email: string }; // User ID or User object
 }
 
 export interface CreateSettlementData {
+  fromEmail?: string;
+  fromUserId?: string;
   toEmail: string;
   toUserId?: string;
   amount: number;
@@ -198,8 +201,18 @@ class BalancesAPI {
   }
 
   // Get group summary with balances, debts, and settlements
-  async getGroupSummary(groupId: string): Promise<{ data: GroupSummary }> {
-    const response = await api.get(`/groups/${groupId}/summary`);
+  async getGroupSummary(groupId: string, cacheBuster?: string): Promise<{ data: GroupSummary }> {
+    const timestamp = cacheBuster || `?_t=${Date.now()}`;
+    const url = `/groups/${groupId}/summary${timestamp}`;
+    
+    // Additional cache-busting for this specific request
+    const response = await api.get(url, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'If-Modified-Since': '0'
+      }
+    });
     return response.data;
   }
 

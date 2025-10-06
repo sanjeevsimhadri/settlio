@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './components/ui';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import Header from './components/Header';
@@ -12,10 +13,11 @@ import './App.css';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
-          <Header />
-          <main className="main-content">
+      <ToastProvider>
+        <Router>
+          <div className="App">
+            <Header />
+            <main className="main-content">
             <Routes>
               {/* Public Routes */}
               <Route
@@ -108,6 +110,7 @@ function App() {
           </main>
         </div>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }

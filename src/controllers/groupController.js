@@ -1,6 +1,7 @@
 const Group = require('../models/Group');
 const User = require('../models/User');
 const Expense = require('../models/Expense');
+const Settlement = require('../models/Settlement');
 const asyncHandler = require('../utils/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 const { getGroupExpenseSummary } = require('./expenseController');
@@ -385,6 +386,13 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const currency = group.currency || 'INR';
 
+    // Get settlements before calculating balances (we need them for balance calculation)
+    const settlements = await Settlement.find({ groupId: groupId })
+      .populate('fromUserId', 'username email')
+      .populate('toUserId', 'username email')
+      .sort({ createdAt: -1 })
+      .exec();
+
     // Calculate member balances
     const memberBalances = [];
     const balanceMap = new Map();
@@ -407,6 +415,28 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
         }
         balanceMap.set(memberEmail, balanceMap.get(memberEmail) - splitAmount);
       });
+    });
+
+    // Process settlements to adjust balances
+    // When someone pays someone else, it settles part of the debt between them
+    settlements.forEach(settlement => {
+      const fromEmail = settlement.fromEmail;
+      const toEmail = settlement.toEmail;
+      const amount = settlement.amount;
+
+      // Initialize if not exists
+      if (!balanceMap.has(fromEmail)) {
+        balanceMap.set(fromEmail, 0);
+      }
+      if (!balanceMap.has(toEmail)) {
+        balanceMap.set(toEmail, 0);
+      }
+
+      // Settlement logic: fromEmail pays toEmail
+      // This INCREASES fromEmail's net balance (they paid money out, reducing their debt)
+      // This DECREASES toEmail's net balance (they received money, reducing what they're owed)
+      balanceMap.set(fromEmail, balanceMap.get(fromEmail) + amount);
+      balanceMap.set(toEmail, balanceMap.get(toEmail) - amount);
     });
 
     // Convert balance map to member balances array
@@ -450,12 +480,11 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
       });
     });
 
-    // Calculate simplified debts
+    // Calculate simplified debts (now with settlements applied)
     const simplifiedDebts = calculateSimplifiedDebtsFromBalances(balanceMap, group.members);
 
-    // For now, settlements is empty (would need settlement tracking)
-    const settlements = [];
-    const totalSettlements = 0;
+    // Calculate total settlements amount
+    const totalSettlements = settlements.reduce((sum, settlement) => sum + settlement.amount, 0);
 
     // Calculate total balance (should be close to 0 if balanced)
     const totalBalance = memberBalances.reduce((sum, member) => sum + member.balanceAmount, 0);
@@ -463,7 +492,7 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
     const summary = {
       totalBalance: Number(totalBalance.toFixed(2)),
       totalExpenses: Number(totalExpenses.toFixed(2)),
-      totalSettlements: totalSettlements,
+      totalSettlements: Number(totalSettlements.toFixed(2)),
       currency: currency,
       memberBalances: memberBalances,
       simplifiedDebts: simplifiedDebts,

@@ -38,9 +38,33 @@
 }
 
 .back-btn:hover {
+  color: #374151;
+}
+
+.modern-alert.success {
+  background: linear-gradient(135deg, #2ed573, #1dd1a1);
+  color: white;
+  border: 1px solid #2ed573;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+.btn:disabled {
   background: #f9fafb;
   border-color: #9ca3af;
   color: #374151;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .header-info {
@@ -113,11 +137,7 @@
   font-weight: 500;
 }
 
-.modern-alert.success {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
+/* Removed duplicate - using gradient version at bottom of file */
 
 .modern-alert.error {
   background: #fef2f2;
@@ -749,14 +769,7 @@
   padding: 64px;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+/* Removed duplicate - using inline button spinner version */
 
 @keyframes spin {
   0% { transform: rotate(0deg); }

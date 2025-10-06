@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { createGroupSchema } from '../../utils/groupValidation';
 import { groupsAPI, CreateGroupData } from '../../services/groupsAPI';
+import { LoadingButton, Alert, Badge } from '../ui';
 import './Groups.css';
 
 interface CreateGroupModalProps {
@@ -18,6 +19,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   const {
     register,
@@ -40,6 +42,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     try {
       setIsSubmitting(true);
       setSubmitError('');
+      setSuccessMessage('');
 
       // Parse member emails
       const memberEmailsList = data.memberEmails
@@ -54,23 +57,37 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         members: memberEmailsList
       };
 
-      await groupsAPI.createGroup(groupData);
+      const result = await groupsAPI.createGroup(groupData);
       
-      // Reset form and close modal
-      reset();
-      onClose();
-      onGroupCreated();
+      // Show success message
+      const memberCount = memberEmailsList.length;
+      const successMsg = memberCount > 0 
+        ? `Group "${data.name}" created successfully! ${memberCount} invitation${memberCount > 1 ? 's' : ''} sent.`
+        : `Group "${data.name}" created successfully!`;
+      
+      setSuccessMessage(successMsg);
+      
+      // Brief delay to show success state
+      setTimeout(() => {
+        reset();
+        setSuccessMessage('');
+        onClose();
+        onGroupCreated();
+      }, 2000);
 
     } catch (error: any) {
-      setSubmitError(error.error || 'Failed to create group. Please try again.');
+      const errorMsg = error.error || 'Failed to create group. Please try again.';
+      setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
+    if (isSubmitting) return; // Prevent closing while submitting
     reset();
     setSubmitError('');
+    setSuccessMessage('');
     onClose();
   };
 
@@ -79,16 +96,25 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     setValue('memberEmails', samples);
   };
 
+  // Parse member emails for preview
+  const parsedEmails = memberEmails
+    ? memberEmails
+        .split(',')
+        .map(email => email.trim())
+        .filter(email => email !== '')
+    : [];
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content create-group-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Create New Group</h2>
           <button 
-            className="modal-close"
+            className="close-button" 
             onClick={handleClose}
+            disabled={isSubmitting}
             type="button"
           >
             ×
@@ -96,18 +122,28 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="create-group-form">
+          {/* Success Message */}
+          {successMessage && (
+            <Alert type="success" message={successMessage} />
+          )}
+
+          {/* Error Message */}
+          {submitError && (
+            <Alert type="error" message={submitError} />
+          )}
+
           {/* Group Name */}
           <div className="form-group">
-            <label htmlFor="name" className="form-label">
+            <label htmlFor="groupName" className="form-label">
               Group Name *
             </label>
             <input
-              id="name"
+              id="groupName"
               type="text"
               {...register('name')}
               className={`form-input ${errors.name ? 'error' : ''}`}
               placeholder="Enter group name (e.g., 'Weekend Trip', 'Office Lunch')"
-              autoComplete="off"
+              disabled={isSubmitting}
             />
             {errors.name && (
               <span className="error-message">{errors.name.message}</span>
@@ -122,74 +158,69 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             <textarea
               id="memberEmails"
               {...register('memberEmails')}
-              className={`form-input ${errors.memberEmails ? 'error' : ''}`}
+              className={`form-input form-textarea ${errors.memberEmails ? 'error' : ''}`}
               placeholder="Enter member emails separated by commas&#10;Example: john@example.com, jane@example.com"
               rows={3}
+              disabled={isSubmitting}
             />
+            <div className="form-helper-text">
+              Enter email addresses separated by commas. You can add members later too.
+            </div>
             {errors.memberEmails && (
               <span className="error-message">{errors.memberEmails.message}</span>
             )}
-            <div className="form-hint">
-              <p>Enter email addresses separated by commas. You can add members later too.</p>
-              <button
+            
+            <div className="email-controls">
+              <LoadingButton
                 type="button"
                 onClick={addSampleEmails}
-                className="sample-button"
+                variant="secondary"
+                size="sm"
+                disabled={isSubmitting}
               >
                 Use Sample Emails
-              </button>
+              </LoadingButton>
+              
+              {parsedEmails.length > 0 && (
+                <Badge variant="secondary">
+                  {parsedEmails.length} member{parsedEmails.length > 1 ? 's' : ''} to invite
+                </Badge>
+              )}
             </div>
           </div>
 
           {/* Email Preview */}
-          {memberEmails && memberEmails.trim() && (
+          {parsedEmails.length > 0 && (
             <div className="email-preview">
               <h4>Members to invite:</h4>
-              <div className="email-tags">
-                {memberEmails
-                  .split(',')
-                  .map(email => email.trim())
-                  .filter(email => email !== '')
-                  .map((email, index) => (
-                    <span key={index} className="email-tag">
-                      {email}
-                    </span>
-                  ))}
+              <div className="email-list">
+                {parsedEmails.map((email, index) => (
+                  <Badge key={index} variant="primary" size="small">
+                    {email}
+                  </Badge>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Error Message */}
-          {submitError && (
-            <div className="alert error">
-              {submitError}
-            </div>
-          )}
-
           {/* Action Buttons */}
-          <div className="modal-actions">
-            <button
+          <div className="form-actions">
+            <LoadingButton
               type="button"
               onClick={handleClose}
-              className="button secondary"
+              variant="secondary"
               disabled={isSubmitting}
             >
               Cancel
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               type="submit"
-              disabled={isSubmitting}
-              className="button primary"
+              variant="primary"
+              isLoading={isSubmitting}
+              disabled={isSubmitting || !!successMessage}
             >
-              {isSubmitting ? (
-                <>
-                  <span className="spinner"></span>
-                  Creating...
-                </>
-              ) : (
-                'Create Group'
-              )}
-            </button>
+              {successMessage ? 'Created!' : 'Create Group'}
+            </LoadingButton>
           </div>
         </form>
       </div>

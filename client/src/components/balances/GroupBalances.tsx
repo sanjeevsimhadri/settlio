@@ -6,6 +6,8 @@ import { balancesAPI, GroupSummary, CreateSettlementData, DebtRelationship } fro
 import { Group, User, GroupMember } from '../../services/groupsAPI';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../common';
+import { Card, Badge, Avatar, LoadingButton } from '../ui';
+import { CreationInfo } from '../common/CreationInfo';
 import './Balances.css';
 import './ModernBalances.css';
 
@@ -24,6 +26,7 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
   const [selectedDebt, setSelectedDebt] = useState<DebtRelationship | null>(null);
   const [submitError, setSubmitError] = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'balances' | 'settlements'>('balances');
 
   // Form for new settlements
@@ -48,15 +51,22 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
 
   // Load group balances on component mount
   useEffect(() => {
-    loadGroupBalances();
+    loadGroupBalances(false);
   }, [group._id]);
 
-  const loadGroupBalances = async () => {
+  const loadGroupBalances = async (forceFresh = false) => {
     try {
       setLoading(true);
       setError('');
-      const response = await balancesAPI.getGroupSummary(group._id);
+      
+      // Add cache-busting timestamp for fresh data
+      const cacheBuster = forceFresh ? `?t=${Date.now()}` : '';
+      console.log('Loading group balances', forceFresh ? 'with cache busting' : 'normally');
+      
+      const response = await balancesAPI.getGroupSummary(group._id, cacheBuster);
       setGroupSummary(response.data);
+      
+      console.log('Group summary loaded:', response.data);
     } catch (err: any) {
       console.error('Failed to load group balances:', err);
       setError(err.response?.data?.message || 'Failed to load balances');
@@ -69,8 +79,10 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
     console.log('Form submitted with data:', data);
     console.log('Group data:', group);
     
+    setIsSubmitting(true);
     try {
       setSubmitError('');
+      setSubmitSuccess('');
       
       // Validate required fields
       if (!data.payerId || !data.payeeId || !data.amount) {
@@ -85,20 +97,30 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
         throw new Error('Amount must be greater than 0');
       }
 
-      // Find the payee member details
+      // Find both payer and payee member details
+      const payerMember = group.members.find(m => 
+        (m.userId?._id === data.payerId) || (m.email === data.payerId)
+      );
+      
       const payeeMember = group.members.find(m => 
         (m.userId?._id === data.payeeId) || (m.email === data.payeeId)
       );
 
+      if (!payerMember) {
+        throw new Error('Invalid payer selected');
+      }
+      
       if (!payeeMember) {
         throw new Error('Invalid payee selected');
       }
 
       const settlementData: CreateSettlementData = {
+        fromEmail: payerMember.email,
+        fromUserId: payerMember.userId?._id || undefined,
         toEmail: payeeMember.email,
         toUserId: payeeMember.userId?._id || undefined,
         amount: parseFloat(data.amount),
-        comments: data.description || `Settlement payment`,
+        comments: data.description || `Settlement: ${payerMember.userId?.username || payerMember.email} paid ${payeeMember.userId?.username || payeeMember.email}`,
         currency: 'INR'
       };
 
@@ -109,21 +131,39 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
       setSubmitSuccess('Payment recorded successfully!');
       setIsAddingSettlement(false);
       settlementForm.reset();
-      await loadGroupBalances();
+      
+      // Force fresh data fetch with cache busting
+      console.log('Refreshing data after settlement creation...');
+      
+      // Clear any cached data by resetting the state first
+      setGroupSummary(null);
+      setLoading(true);
+      
+      // Wait a moment to ensure backend is updated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reload with fresh data (force cache busting with timestamp)
+      await loadGroupBalances(true);
+      
+      console.log('Data refresh completed after settlement');
 
       setTimeout(() => setSubmitSuccess(''), 3000);
     } catch (err: any) {
       console.error('Settlement error:', err);
       const errorMessage = err.response?.data?.message || err.message || 'Failed to record payment';
       setSubmitError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const onSubmitPartialSettlement = async (data: any) => {
     if (!selectedDebt) return;
 
+    setIsSubmitting(true);
     try {
       setSubmitError('');
+      setSubmitSuccess('');
       const settlementData: CreateSettlementData = {
         toEmail: selectedDebt.to.email,
         toUserId: selectedDebt.to._id,
@@ -137,12 +177,17 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
       setIsPartialSettling(false);
       setSelectedDebt(null);
       partialForm.reset();
-      await loadGroupBalances();
+      
+      // Force fresh data reload
+      setGroupSummary(null);
+      await loadGroupBalances(true);
 
       setTimeout(() => setSubmitSuccess(''), 3000);
     } catch (err: any) {
       console.error('Partial settlement error:', err);
       setSubmitError(err.response?.data?.message || 'Failed to record partial settlement');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -431,27 +476,74 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                   <p>No payments have been recorded between members. Use the "Record Payment" button to track settlements.</p>
                 </div>
               ) : (
-                <div className="settlement-grid">
+                <div className="space-y-4">
                   {groupSummary.settlements.map((settlement) => (
-                    <div key={settlement._id} className="settlement-item">
-                      <div className="settlement-info">
-                        <div className="settlement-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                        </div>
-                        <div className="settlement-details">
-                          <div className="settlement-text">
-                            {settlement.fromUser?.username || settlement.fromEmail} paid {settlement.toUser?.username || settlement.toEmail}
+                    <Card key={settlement._id} variant="outlined" padding="medium">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-green-600">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
                           </div>
-                          <div className="settlement-date">{formatDate(settlement.createdAt)}</div>
-                          {settlement.comments && (
-                            <div className="settlement-desc">{settlement.comments}</div>
-                          )}
+                          
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Avatar 
+                                alt={settlement.fromUser?.username || settlement.fromEmail}
+                                size="small"
+                              />
+                              <span className="text-sm font-medium text-gray-900 truncate">
+                                {settlement.fromUser?.username || settlement.fromEmail}
+                              </span>
+                              <span className="text-sm text-gray-600">paid</span>
+                              <Avatar 
+                                alt={settlement.toUser?.username || settlement.toEmail}
+                                size="small"
+                              />
+                              <span className="text-sm font-medium text-gray-900 truncate">
+                                {settlement.toUser?.username || settlement.toEmail}
+                              </span>
+                            </div>
+                            
+                            {settlement.comments && (
+                              <div className="text-sm text-gray-600">
+                                {settlement.comments}
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={settlement.status === 'completed' ? 'success' : 'warning'} 
+                                size="small"
+                              >
+                                {settlement.status}
+                              </Badge>
+                              {settlement.paymentMethod && (
+                                <Badge variant="secondary" size="small">
+                                  {settlement.paymentMethod}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <CreationInfo
+                              createdAt={settlement.createdAt}
+                              createdBy={settlement.createdBy || settlement.fromUser}
+                              users={group.members.map(m => m.userId).filter((user): user is NonNullable<typeof user> => user !== null)}
+                              layout="compact"
+                              size="small"
+                              showRelativeTime={true}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex-shrink-0 text-right">
+                          <div className="text-lg font-semibold text-green-600">
+                            {formatCurrency(settlement.amount)}
+                          </div>
                         </div>
                       </div>
-                      <div className="settlement-amount">{formatCurrency(settlement.amount)}</div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               )}
@@ -575,6 +667,7 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                 <button
                   type="button"
                   className="btn secondary"
+                  disabled={isSubmitting}
                   onClick={() => {
                     setIsAddingSettlement(false);
                     settlementForm.reset();
@@ -586,8 +679,16 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                 <button
                   type="submit"
                   className="btn primary"
+                  disabled={isSubmitting}
                 >
-                  Record Payment
+                  {isSubmitting ? (
+                    <>
+                      <span className="loading-spinner"></span>
+                      Recording...
+                    </>
+                  ) : (
+                    'Record Payment'
+                  )}
                 </button>
               </div>
             </form>
@@ -654,6 +755,7 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                 <button
                   type="button"
                   className="btn secondary"
+                  disabled={isSubmitting}
                   onClick={() => {
                     setIsPartialSettling(false);
                     setSelectedDebt(null);
@@ -666,8 +768,16 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                 <button
                   type="submit"
                   className="btn primary"
+                  disabled={isSubmitting}
                 >
-                  Record Payment
+                  {isSubmitting ? (
+                    <>
+                      <span className="loading-spinner"></span>
+                      Recording...
+                    </>
+                  ) : (
+                    'Record Payment'
+                  )}
                 </button>
               </div>
             </form>

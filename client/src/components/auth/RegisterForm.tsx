@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { registerSchema, RegisterFormData } from '../../utils/validation';
+import { LoadingButton, Alert, Input, Card } from '../ui';
 import './Auth.css';
 
 const RegisterForm: React.FC = () => {
@@ -52,7 +53,7 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <Card className="auth-card" padding="large">
         <div className="auth-header">
           <h1>Join Settlio</h1>
           <p>Create your account to start splitting expenses</p>
@@ -60,76 +61,48 @@ const RegisterForm: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
           {/* Username Field */}
-          <div className="form-group">
-            <label htmlFor="username" className="form-label">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              {...register('username')}
-              className={`form-input ${errors.username ? 'error' : ''}`}
-              placeholder="Choose a username"
-              autoComplete="username"
-            />
-            {errors.username && (
-              <span className="error-message">{errors.username.message}</span>
-            )}
-          </div>
+          <Input
+            label="Username"
+            type="text"
+            {...register('username')}
+            error={errors.username?.message}
+            placeholder="Choose a username"
+            autoComplete="username"
+            fullWidth
+          />
 
           {/* Email Field */}
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('email')}
-              className={`form-input ${errors.email ? 'error' : ''}`}
-              placeholder="Enter your email"
-              autoComplete="email"
-            />
-            {errors.email && (
-              <span className="error-message">{errors.email.message}</span>
-            )}
-          </div>
+          <Input
+            label="Email Address"
+            type="email"
+            {...register('email')}
+            error={errors.email?.message}
+            placeholder="Enter your email"
+            autoComplete="email"
+            fullWidth
+          />
 
           {/* Password Field */}
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              {...register('password')}
-              className={`form-input ${errors.password ? 'error' : ''}`}
-              placeholder="Create a strong password"
-              autoComplete="new-password"
-            />
-            {errors.password && (
-              <span className="error-message">{errors.password.message}</span>
-            )}
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            {...register('password')}
+            error={errors.password?.message}
+            placeholder="Create a strong password"
+            autoComplete="new-password"
+            fullWidth
+          />
 
           {/* Confirm Password Field */}
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              {...register('confirmPassword')}
-              className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-              placeholder="Confirm your password"
-              autoComplete="new-password"
-            />
-            {errors.confirmPassword && (
-              <span className="error-message">{errors.confirmPassword.message}</span>
-            )}
-          </div>
+          <Input
+            label="Confirm Password"
+            type="password"
+            {...register('confirmPassword')}
+            error={errors.confirmPassword?.message}
+            placeholder="Confirm your password"
+            autoComplete="new-password"
+            fullWidth
+          />
 
           {/* Password Requirements */}
           <div className="password-requirements">
@@ -155,26 +128,26 @@ const RegisterForm: React.FC = () => {
 
           {/* Error Messages */}
           {(error || submitError) && (
-            <div className="alert error">
-              {error || submitError}
-            </div>
+            <Alert
+              type="error"
+              message={error || submitError}
+              className="auth-alert"
+            />
           )}
 
           {/* Submit Button */}
-          <button
+          <LoadingButton
             type="submit"
+            isLoading={isSubmitting || isLoading}
             disabled={isSubmitting || isLoading}
-            className="auth-button primary"
+            variant="primary"
+            size="lg"
+            className="auth-button-full"
+            loadingText="Creating Account..."
+            aria-label="Create your Settlio account"
           >
-            {isSubmitting || isLoading ? (
-              <>
-                <span className="spinner"></span>
-                Creating Account...
-              </>
-            ) : (
-              'Create Account'
-            )}
-          </button>
+            Create Account
+          </LoadingButton>
         </form>
 
         <div className="auth-footer">
@@ -185,7 +158,7 @@ const RegisterForm: React.FC = () => {
             </Link>
           </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

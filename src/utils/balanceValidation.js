@@ -2,6 +2,12 @@ const { body } = require('express-validator');
 
 // Validation for creating settlements
 const validateSettlement = [
+  body('fromEmail')
+    .optional()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email is required for payer'),
+    
   body('toEmail')
     .isEmail()
     .normalizeEmail()
@@ -30,10 +36,15 @@ const validateSettlement = [
     .trim()
     .withMessage('Comments cannot exceed 1000 characters'),
   
+  body('fromUserId')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid payer user ID format'),
+    
   body('toUserId')
     .optional()
     .isMongoId()
-    .withMessage('Invalid user ID format')
+    .withMessage('Invalid recipient user ID format')
 ];
 
 module.exports = {

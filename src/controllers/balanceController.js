@@ -233,6 +233,8 @@ const createSettlement = async (req, res) => {
 
     const { groupId } = req.params;
     const {
+      fromEmail: requestFromEmail,
+      fromUserId: requestFromUserId,
       toEmail,
       toUserId,
       amount,
@@ -242,8 +244,11 @@ const createSettlement = async (req, res) => {
     } = req.body;
 
     const currentUser = req.user;
-    const fromEmail = currentUser.email;
-    const fromUserId = currentUser.id;
+    // Use provided from details or fallback to current user
+    const fromEmail = requestFromEmail || currentUser.email;
+    const fromUserId = requestFromUserId || currentUser.id;
+    
+    console.log('Settlement from:', fromEmail, 'to:', toEmail);
 
     // Verify group exists and user is member
     const group = await Group.findById(groupId).populate('members.userId', 'username email');
@@ -260,21 +265,72 @@ const createSettlement = async (req, res) => {
       return res.status(403).json({ error: 'Access denied. You are not a member of this group.' });
     }
 
-    // Verify recipient is also a member
+    // Verify both payer and recipient are members
+    const payerIsMember = group.members.some(member => 
+      member.email === fromEmail || 
+      (fromUserId && member.userId && member.userId._id.toString() === fromUserId)
+    );
+    
     const recipientIsMember = group.members.some(member => 
       member.email === toEmail || 
       (toUserId && member.userId && member.userId._id.toString() === toUserId)
     );
 
+    if (!payerIsMember) {
+      return res.status(400).json({ error: 'Settlement payer is not a member of this group' });
+    }
+    
     if (!recipientIsMember) {
       return res.status(400).json({ error: 'Settlement recipient is not a member of this group' });
     }
 
-    // Temporarily skip balance validation to test settlement creation
-    console.log('Skipping balance validation for debugging...');
+    // Calculate current debt relationship between users
+    console.log('Calculating debt relationship between users...');
     
-    // TODO: Re-enable balance validation after fixing the core issue
-    // const currentBalance = await Settlement.calculateBalanceBetween(groupId, fromEmail, toEmail);
+    try {
+      // Get simplified debts to understand who owes whom
+      const { calculateSimplifiedDebts } = require('../utils/debtSimplification');
+      const debtsData = await calculateSimplifiedDebts(groupId);
+      
+      // Find if there's a debt relationship from fromEmail to toEmail
+      const debtExists = debtsData.simplifiedTransactions.some(transaction => 
+        transaction.from.email === fromEmail && transaction.to.email === toEmail
+      );
+      
+      // Also check reverse relationship (someone might be recording payment received)
+      const reverseDebtExists = debtsData.simplifiedTransactions.some(transaction => 
+        transaction.from.email === toEmail && transaction.to.email === fromEmail
+      );
+      
+      if (!debtExists && !reverseDebtExists) {
+        return res.status(400).json({ 
+          error: 'No debt relationship exists between these users'
+        });
+      }
+      
+      // Find maximum settleable amount
+      let maxAmount = 0;
+      if (debtExists) {
+        const debt = debtsData.simplifiedTransactions.find(t => 
+          t.from.email === fromEmail && t.to.email === toEmail
+        );
+        maxAmount = debt ? debt.amount : 0;
+      } else if (reverseDebtExists) {
+        const debt = debtsData.simplifiedTransactions.find(t => 
+          t.from.email === toEmail && t.to.email === fromEmail
+        );
+        maxAmount = debt ? debt.amount : 0;
+      }
+      
+      if (amount > maxAmount) {
+        return res.status(400).json({ 
+          error: `Settlement amount cannot exceed the debt amount of ₹${maxAmount.toFixed(2)}`
+        });
+      }
+      
+    } catch (debtCalcError) {
+      console.log('Warning: Could not calculate debts, proceeding with settlement');
+    }
     
     // Validate settlement amount is positive
     if (amount <= 0) {

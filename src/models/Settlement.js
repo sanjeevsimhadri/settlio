@@ -79,6 +79,12 @@ settlementSchema.pre('validate', function(next) {
   if (this.fromEmail === this.toEmail) {
     return next(new Error('Cannot settle with yourself'));
   }
+  
+  // Validate that both emails are provided
+  if (!this.fromEmail || !this.toEmail) {
+    return next(new Error('Both payer and payee email are required'));
+  }
+  
   next();
 });
 

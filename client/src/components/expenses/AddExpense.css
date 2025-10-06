@@ -13,6 +13,35 @@
   z-index: 1000;
 }
 
+/* Modern UI Overrides for AddExpense */
+.modal-description {
+  margin-bottom: 24px;
+}
+
+.modal-description p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+}
+
+.expense-error-alert {
+  margin-bottom: 20px;
+}
+
+/* Form Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .modal-content {
   background: white;
   border-radius: 12px;

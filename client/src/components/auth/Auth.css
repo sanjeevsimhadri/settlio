@@ -43,6 +43,17 @@
   gap: 20px;
 }
 
+/* Modern UI Component Overrides */
+.auth-button-full,
+button.auth-button-full {
+  width: 100% !important;
+  margin-top: 8px;
+}
+
+.auth-alert {
+  margin-bottom: 8px;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

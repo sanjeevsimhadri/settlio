@@ -17,6 +17,7 @@ export interface Expense {
   comments?: string;
   settled: boolean;
   createdAt: string;
+  createdBy?: string | { _id: string; username: string; email: string }; // User ID or User object
   updatedAt: string;
 }
 

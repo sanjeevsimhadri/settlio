@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { loginSchema, LoginFormData } from '../../utils/validation';
+import { LoadingButton, Alert, Input, Card } from '../ui';
 import './Auth.css';
 
 const LoginForm: React.FC = () => {
@@ -46,7 +47,7 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <Card className="auth-card" padding="large">
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your Settlio account</p>
@@ -54,63 +55,51 @@ const LoginForm: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
           {/* Email Field */}
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('email')}
-              className={`form-input ${errors.email ? 'error' : ''}`}
-              placeholder="Enter your email"
-              autoComplete="email"
-            />
-            {errors.email && (
-              <span className="error-message">{errors.email.message}</span>
-            )}
-          </div>
+          <Input
+            label="Email Address"
+            type="email"
+            {...register('email')}
+            error={errors.email?.message}
+            placeholder="Enter your email"
+            autoComplete="email"
+            fullWidth
+            aria-describedby="email-help"
+          />
 
           {/* Password Field */}
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              {...register('password')}
-              className={`form-input ${errors.password ? 'error' : ''}`}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
-            {errors.password && (
-              <span className="error-message">{errors.password.message}</span>
-            )}
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            {...register('password')}
+            error={errors.password?.message}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            fullWidth
+            aria-describedby="password-help"
+          />
 
           {/* Error Messages */}
           {(error || submitError) && (
-            <div className="alert error">
-              {error || submitError}
-            </div>
+            <Alert
+              type="error"
+              message={error || submitError}
+              className="auth-alert"
+            />
           )}
 
           {/* Submit Button */}
-          <button
+          <LoadingButton
             type="submit"
+            isLoading={isSubmitting || isLoading}
             disabled={isSubmitting || isLoading}
-            className="auth-button primary"
+            variant="primary"
+            size="lg"
+            className="auth-button-full"
+            loadingText="Signing In..."
+            aria-label="Sign in to your account"
           >
-            {isSubmitting || isLoading ? (
-              <>
-                <span className="spinner"></span>
-                Signing In...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </button>
+            Sign In
+          </LoadingButton>
         </form>
 
         <div className="auth-footer">
@@ -121,7 +110,7 @@ const LoginForm: React.FC = () => {
             </Link>
           </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -3,7 +3,10 @@ import { expensesAPI, Expense } from '../../services/expensesAPI';
 import { Group, GroupMember } from '../../services/groupsAPI';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../common';
+import { LoadingButton } from '../ui';
 import { AddExpense } from './index';
+import { Card, Badge, Avatar } from '../ui';
+import { CreationInfo } from '../common/CreationInfo';
 import './Expenses.css';
 
 interface GroupExpensesProps {
@@ -126,12 +129,12 @@ const GroupExpenses: React.FC<GroupExpensesProps> = ({ group, onBack }) => {
           <h1>{group.name} - Expenses</h1>
           <p>{expenses.length} expense{expenses.length !== 1 ? 's' : ''} • {group.members.length} member{group.members.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
-          className="button primary"
+        <LoadingButton
+          variant="primary"
           onClick={() => setIsAddingExpense(true)}
         >
           + Add Expense
-        </button>
+        </LoadingButton>
       </div>
 
       {/* Success Messages */}
@@ -177,67 +180,109 @@ const GroupExpenses: React.FC<GroupExpensesProps> = ({ group, onBack }) => {
                 }}
               />
             ) : (
-              <div className="expenses-list">
+              <div className="space-y-4">
                 {expenses.map((expense) => (
-                  <div key={expense._id} className="expense-item">
-                    <div className="expense-header">
-                      <div className="expense-info">
-                        <h4 className="expense-description">{expense.description}</h4>
-                        <div className="expense-meta">
-                          <span className="expense-date">{formatDate(expense.date)}</span>
-                          <span className="expense-currency">{expense.currency}</span>
+                  <Card key={expense._id} variant="outlined" padding="medium" hover={true}>
+                    <div className="space-y-4">
+                      {/* Expense Header */}
+                      <div className="flex justify-between items-start">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-lg font-semibold text-gray-900 truncate">
+                            {expense.description}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-1">
+                            <Badge variant="secondary" size="small">
+                              {formatDate(expense.date)}
+                            </Badge>
+                            <Badge variant="info" size="small">
+                              {expense.currency}
+                            </Badge>
+                            {expense.settled && (
+                              <Badge variant="success" size="small">
+                                Settled
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-gray-900">
+                            {formatCurrency(expense.amount, expense.currency)}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {formatCurrency(expense.amount / expense.splitAmong.length, expense.currency)} per person
+                          </div>
                         </div>
                       </div>
-                      <div className="expense-amount">
-                        {formatCurrency(expense.amount, expense.currency)}
-                      </div>
-                    </div>
 
-                    <div className="expense-details">
-                      <div className="paid-by">
-                        <span className="label">Paid by:</span>
-                        <span className="value">
-                          {getCurrentUserDisplay(expense.paidByEmail, expense.paidByUserId?._id)}
-                        </span>
-                      </div>
+                      {/* Expense Details */}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Paid by:</h5>
+                          <div className="flex items-center gap-3">
+                            <Avatar 
+                              alt={getCurrentUserDisplay(expense.paidByEmail, expense.paidByUserId?._id)}
+                              size="small"
+                            />
+                            <span className="text-sm text-gray-900">
+                              {getCurrentUserDisplay(expense.paidByEmail, expense.paidByUserId?._id)}
+                            </span>
+                          </div>
+                        </div>
 
-                      <div className="split-details">
-                        <span className="label">Split among:</span>
-                        <div className="split-list">
-                          {expense.splitAmong.map((split, index) => (
-                            <div key={index} className="split-item">
-                              <span className="split-user">
-                                {getCurrentUserDisplay(split.email, split.userId)}
-                              </span>
-                              <span className="split-amount">
-                                {formatCurrency(expense.amount / expense.splitAmong.length, expense.currency)}
-                              </span>
-                            </div>
-                          ))}
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Split among:</h5>
+                          <div className="space-y-1">
+                            {expense.splitAmong.map((split, index) => (
+                              <div key={index} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Avatar 
+                                    alt={getCurrentUserDisplay(split.email, split.userId)}
+                                    size="small"
+                                  />
+                                  <span className="text-sm text-gray-900">
+                                    {getCurrentUserDisplay(split.email, split.userId)}
+                                  </span>
+                                </div>
+                                <span className="text-sm font-medium text-gray-700">
+                                  {formatCurrency(expense.amount / expense.splitAmong.length, expense.currency)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
                       {expense.comments && (
-                        <div className="expense-notes">
-                          <span className="label">Notes:</span>
-                          <span className="value">{expense.comments}</span>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <h5 className="text-sm font-medium text-gray-700 mb-1">Notes:</h5>
+                          <p className="text-sm text-gray-600">{expense.comments}</p>
                         </div>
                       )}
-                    </div>
 
-                    <div className="expense-actions">
-                      {((expense.paidByUserId?._id && expense.paidByUserId._id === currentUser?.id) || 
-                        (expense.paidByEmail === currentUser?.email) ||
-                        (group.admin._id === currentUser?.id)) && (
-                        <button
-                          className="button danger small"
-                          onClick={() => handleDeleteExpense(expense._id, expense.description)}
-                        >
-                          Delete
-                        </button>
-                      )}
+                      {/* Creation Info & Actions */}
+                      <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
+                        <CreationInfo
+                          createdAt={expense.createdAt}
+                          createdBy={expense.createdBy || expense.paidByUserId}
+                          users={group.members.map(m => m.userId).filter((user): user is NonNullable<typeof user> => user !== null)}
+                          layout="compact"
+                          size="small"
+                          showRelativeTime={true}
+                        />
+                        
+                        {((expense.paidByUserId?._id && expense.paidByUserId._id === currentUser?.id) || 
+                          (expense.paidByEmail === currentUser?.email) ||
+                          (group.admin._id === currentUser?.id)) && (
+                          <button
+                            className="text-sm text-red-600 hover:text-red-800 font-medium"
+                            onClick={() => handleDeleteExpense(expense._id, expense.description)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}

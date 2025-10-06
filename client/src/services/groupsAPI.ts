@@ -7,6 +7,7 @@ export interface Group {
   admin: User;
   memberCount: number;
   createdAt: string;
+  createdBy?: string | User; // User ID or User object
   updatedAt: string;
 }
 

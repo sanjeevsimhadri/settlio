@@ -1,4 +1,5 @@
 import React from 'react';
+import { LoadingButton } from '../ui';
 import './Common.css';
 
 interface ErrorMessageProps {
@@ -18,12 +19,12 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
         {message}
       </div>
       {onRetry && (
-        <button
-          className="button secondary"
+        <LoadingButton
+          variant="secondary"
           onClick={onRetry}
         >
           {retryText}
-        </button>
+        </LoadingButton>
       )}
     </div>
   );

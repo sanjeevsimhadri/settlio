@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { addMemberSchema } from '../../utils/groupValidation';
 import { groupsAPI, Group, User, GroupMember } from '../../services/groupsAPI';
+import { expensesAPI, Expense } from '../../services/expensesAPI';
+import { balancesAPI, GroupSummary } from '../../services/balancesAPI';
 import GroupExpenses from '../expenses/GroupExpenses';
 import GroupBalances from '../balances/GroupBalances';
+import { Card, LoadingButton, Input, Badge, Avatar, Alert } from '../ui';
+import { RecordHeader, CreationInfo } from '../common/CreationInfo';
+import { useAuth } from '../../contexts/AuthContext';
 import './Groups.css';
 
 interface GroupDetailsProps {
@@ -13,12 +18,19 @@ interface GroupDetailsProps {
 }
 
 const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'expenses' | 'balances'>('overview');
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [memberError, setMemberError] = useState('');
   const [memberSuccess, setMemberSuccess] = useState('');
   const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  
+  // New state for data
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [groupSummary, setGroupSummary] = useState<GroupSummary | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [dataError, setDataError] = useState('');
 
   const {
     register,
@@ -34,6 +46,49 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
   });
 
   const watchedEmail = watch('email');
+
+  // Fetch group data (expenses and summary)
+  const fetchGroupData = async () => {
+    try {
+      setDataLoading(true);
+      setDataError('');
+      
+      const [expensesResponse, summaryResponse] = await Promise.all([
+        expensesAPI.getGroupExpenses(group._id),
+        balancesAPI.getGroupSummary(group._id)
+      ]);
+      
+      setExpenses(expensesResponse.data);
+      setGroupSummary(summaryResponse.data);
+    } catch (error: any) {
+      console.error('Error fetching group data:', error);
+      setDataError('Failed to load group data');
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchGroupData();
+  }, [group._id]);
+
+  // Get user's balance from group summary
+  const getUserBalance = () => {
+    if (!groupSummary || !user) return 0;
+    const userBalance = groupSummary.memberBalances.find(
+      balance => balance.user.email === user.email
+    );
+    return userBalance ? userBalance.balance : 0;
+  };
+
+  // Get recent activity from expenses
+  const getRecentActivity = () => {
+    if (!expenses.length) return [];
+    return expenses
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+  };
 
   // Search for users by email
   const searchUsers = async (email: string) => {
@@ -78,13 +133,12 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
       reset();
       setSearchedUsers([]);
       
-      setTimeout(() => {
+        setTimeout(() => {
         setIsAddingMember(false);
         setMemberSuccess('');
+        fetchGroupData(); // Refresh the group data
         onBack(); // Refresh the group data
-      }, 2000);
-
-    } catch (error: any) {
+      }, 2000);    } catch (error: any) {
       setMemberError(error.error || 'Failed to add member. Please try again.');
     }
   };
@@ -100,6 +154,7 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
       
       setTimeout(() => {
         setMemberSuccess('');
+        fetchGroupData(); // Refresh the group data
         onBack(); // Refresh the group data
       }, 1500);
 
@@ -111,14 +166,29 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
   return (
     <div className="group-details">
       {/* Header */}
-      <div className="group-details-header">
-        <button className="back-button" onClick={onBack}>
-          ← Back to Groups
-        </button>
-        <div className="group-info">
-          <h1>{group.name}</h1>
-          <p>{group.members.length} member{group.members.length !== 1 ? 's' : ''} • Created {new Date(group.createdAt).toLocaleDateString()}</p>
-        </div>
+      <div className="mb-6">
+        <LoadingButton
+          variant="secondary"
+          size="sm"
+          onClick={onBack}
+          className="mb-4"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="mr-2">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          Back to Groups
+        </LoadingButton>
+        
+        <Card variant="elevated" padding="large">
+          <RecordHeader
+            title={group.name}
+            subtitle={`${group.members.length} member${group.members.length !== 1 ? 's' : ''}`}
+            createdAt={group.createdAt}
+            createdBy={group.createdBy || group.admin}
+            users={group.members.map(m => m.userId).filter((user): user is NonNullable<typeof user> => user !== null)}
+            showAvatar={true}
+          />
+        </Card>
       </div>
 
       {/* Tab Navigation */}
@@ -153,31 +223,97 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
       <div className="tab-content">
         {activeTab === 'overview' && (
           <div className="overview-tab">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Total Members</h3>
-                <div className="stat-number">{group.members.length}</div>
+            {dataLoading && (
+              <div className="loading-state">
+                <div className="spinner large"></div>
+                <p>Loading group data...</p>
               </div>
-              <div className="stat-card">
-                <h3>Total Expenses</h3>
-                <div className="stat-number">0</div>
+            )}
+            
+            {dataError && (
+              <div className="error-state">
+                <div className="alert error">{dataError}</div>
+                <LoadingButton variant="secondary" onClick={fetchGroupData}>
+                  Try Again
+                </LoadingButton>
               </div>
-              <div className="stat-card">
-                <h3>Your Balance</h3>
-                <div className="stat-number balance-positive">$0.00</div>
-              </div>
-              <div className="stat-card">
-                <h3>Group Total</h3>
-                <div className="stat-number">$0.00</div>
-              </div>
-            </div>
+            )}
+            
+            {!dataLoading && !dataError && (
+              <>
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <h3>Total Members</h3>
+                    <div className="stat-number">{group.members.length}</div>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Total Expenses</h3>
+                    <div className="stat-number">{expenses.length}</div>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Your Balance</h3>
+                    <div className={`stat-number ${
+                      getUserBalance() > 0 
+                        ? 'balance-positive' 
+                        : getUserBalance() < 0 
+                        ? 'balance-negative' 
+                        : ''
+                    }`}>
+                      ₹{Math.abs(getUserBalance()).toFixed(2)}
+                      {getUserBalance() !== 0 && (
+                        <span className="balance-indicator">
+                          {getUserBalance() > 0 ? ' (you are owed)' : ' (you owe)'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Group Total</h3>
+                    <div className="stat-number">
+                      ₹{groupSummary ? groupSummary.totalExpenses.toFixed(2) : '0.00'}
+                    </div>
+                  </div>
+                </div>
 
-            <div className="recent-activity">
-              <h3>Recent Activity</h3>
-              <div className="empty-state">
-                <p>No activity yet. Start by adding an expense!</p>
-              </div>
-            </div>
+                <div className="recent-activity">
+                  <h3>Recent Activity</h3>
+                  {getRecentActivity().length > 0 ? (
+                    <div className="activity-list">
+                      {getRecentActivity().map((expense) => (
+                        <div key={expense._id} className="activity-item">
+                          <div className="activity-icon">💰</div>
+                          <div className="activity-details">
+                            <div className="activity-title">{expense.description}</div>
+                            <div className="activity-subtitle">
+                              ₹{expense.amount.toFixed(2)} • paid by {expense.paidByEmail}
+                            </div>
+                            <div className="activity-date">
+                              {new Date(expense.createdAt).toLocaleDateString('en-IN', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <p>No activity yet. Start by adding an expense!</p>
+                      <LoadingButton 
+                        variant="primary" 
+                        onClick={() => setActiveTab('expenses')}
+                        className="mt-4"
+                      >
+                        Add First Expense
+                      </LoadingButton>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -185,12 +321,12 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
           <div className="members-tab">
             <div className="members-header">
               <h3>Group Members</h3>
-              <button
-                className="button primary"
+              <LoadingButton
+                variant="primary"
                 onClick={() => setIsAddingMember(true)}
               >
                 + Add Member
-              </button>
+              </LoadingButton>
             </div>
 
             {/* Add Member Form */}
@@ -251,9 +387,9 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                   )}
 
                   <div className="form-actions">
-                    <button
+                    <LoadingButton
                       type="button"
-                      className="button secondary"
+                      variant="secondary"
                       onClick={() => {
                         setIsAddingMember(false);
                         reset();
@@ -262,10 +398,10 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                       }}
                     >
                       Cancel
-                    </button>
-                    <button type="submit" className="button primary">
+                    </LoadingButton>
+                    <LoadingButton type="submit" variant="primary">
                       Add Member
-                    </button>
+                    </LoadingButton>
                   </div>
                 </form>
               </div>
@@ -293,7 +429,13 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                         )}
                       </div>
                       <div className="member-email">{displayEmail}</div>
-                      <div className="member-balance">Balance: $0.00</div>
+                      <div className="member-balance">
+                        Balance: ₹{
+                          groupSummary 
+                            ? (groupSummary.memberBalances.find(balance => balance.user.email === displayEmail)?.balance || 0).toFixed(2)
+                            : '0.00'
+                        }
+                      </div>
                     </div>
                     <div className="member-actions">
                       {isAdmin && (

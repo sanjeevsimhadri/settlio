@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Avatar } from './ui';
 import './Layout.css';
 
 const Header: React.FC = () => {
@@ -41,17 +42,26 @@ const Header: React.FC = () => {
           <div className="user-menu">
             <span className="user-name">Hello, {user?.username}</span>
             <div className="user-dropdown">
-              <button className="dropdown-button">
-                {user?.username?.charAt(0).toUpperCase()}
-              </button>
-              <div className="dropdown-content">
-                <Link to="/profile" className="dropdown-link">
+              <Avatar
+                fallback={user?.username || 'U'}
+                size="medium"
+                className="dropdown-button avatar-button"
+                onClick={() => {}}
+                alt={`${user?.username} profile`}
+              />
+              <div className="dropdown-content" role="menu">
+                <Link to="/profile" className="dropdown-link" role="menuitem">
                   Profile
                 </Link>
-                <Link to="/settings" className="dropdown-link">
+                <Link to="/settings" className="dropdown-link" role="menuitem">
                   Settings
                 </Link>
-                <button onClick={handleLogout} className="dropdown-link logout">
+                <button 
+                  onClick={handleLogout} 
+                  className="dropdown-link logout"
+                  role="menuitem"
+                  aria-label="Sign out of your account"
+                >
                   Logout
                 </button>
               </div>
