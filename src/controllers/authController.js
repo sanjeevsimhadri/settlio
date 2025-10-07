@@ -79,7 +79,9 @@ const getMe = asyncHandler(async (req, res, next) => {
 const updateProfile = asyncHandler(async (req, res, next) => {
   const fieldsToUpdate = {
     username: req.body.username,
-    email: req.body.email
+    email: req.body.email,
+    mobile: req.body.mobile,
+    profilePhoto: req.body.profilePhoto
   };
 
   // Remove undefined fields
@@ -88,6 +90,22 @@ const updateProfile = asyncHandler(async (req, res, next) => {
       delete fieldsToUpdate[key];
     }
   });
+
+  // Check if email is being changed and if it already exists
+  if (fieldsToUpdate.email && fieldsToUpdate.email !== req.user.email) {
+    const existingUser = await User.findOne({ email: fieldsToUpdate.email });
+    if (existingUser && existingUser._id.toString() !== req.user.id) {
+      return next(new ErrorResponse('Email is already in use', 400));
+    }
+  }
+
+  // Check if username is being changed and if it already exists
+  if (fieldsToUpdate.username && fieldsToUpdate.username !== req.user.username) {
+    const existingUser = await User.findOne({ username: fieldsToUpdate.username });
+    if (existingUser && existingUser._id.toString() !== req.user.id) {
+      return next(new ErrorResponse('Username is already taken', 400));
+    }
+  }
 
   const user = await User.findByIdAndUpdate(
     req.user.id,
@@ -101,6 +119,44 @@ const updateProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: user
+  });
+});
+
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = asyncHandler(async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return next(new ErrorResponse('Please provide current password and new password', 400));
+  }
+
+  // Get user with password field
+  const user = await User.findById(req.user.id).select('+password');
+
+  // Check current password
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) {
+    return next(new ErrorResponse('Current password is incorrect', 400));
+  }
+
+  // Validate new password
+  if (newPassword.length < 6) {
+    return next(new ErrorResponse('New password must be at least 6 characters long', 400));
+  }
+
+  if (currentPassword === newPassword) {
+    return next(new ErrorResponse('New password must be different from current password', 400));
+  }
+
+  // Update password
+  user.password = newPassword;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully'
   });
 });
 
@@ -120,5 +176,6 @@ module.exports = {
   register,
   login,
   getMe,
-  updateProfile
+  updateProfile,
+  changePassword
 };

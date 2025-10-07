@@ -1,0 +1,90 @@
+/* Avatar Component Styles */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  font-weight: 500;
+  color: #4b5563;
+  user-select: none;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.avatar.clickable {
+  cursor: pointer;
+}
+
+.avatar.clickable:hover {
+  background-color: #e5e7eb;
+  transform: scale(1.05);
+}
+
+.avatar.clickable:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Avatar Sizes */
+.avatar-small {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.75rem;
+}
+
+.avatar-medium {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.avatar-large {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1rem;
+}
+
+.avatar-xlarge {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.125rem;
+}
+
+/* Avatar Image */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Header Avatar Specific Styles */
+.header-avatar {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-avatar:hover {
+  background: linear-gradient(135deg, #5b5ff0 0%, #8250f5 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-avatar img {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Profile Photo Avatar in Profile Page */
+.profile-avatar {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: 3px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar img {
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}

@@ -28,6 +28,21 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters long'],
     select: false // Don't include password in queries by default
   },
+  mobile: {
+    type: String,
+    trim: true,
+    sparse: true, // Allows multiple null values
+    validate: {
+      validator: function(v) {
+        return !v || /^\+[1-9]\d{1,14}$/.test(v.replace(/[\s-()]/g, ''));
+      },
+      message: 'Please enter a valid mobile number with country code'
+    }
+  },
+  profilePhoto: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

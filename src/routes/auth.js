@@ -3,8 +3,10 @@ const {
   register,
   login,
   getMe,
-  updateProfile
+  updateProfile,
+  changePassword
 } = require('../controllers/authController');
+const { upload, uploadProfilePhoto } = require('../controllers/uploadController');
 const { protect } = require('../middleware/auth');
 const { validate, registerSchema, loginSchema } = require('../utils/validation');
 
@@ -17,5 +19,7 @@ router.post('/login', validate(loginSchema), login);
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateProfile);
+router.put('/change-password', protect, changePassword);
+router.post('/upload-photo', protect, upload.single('profilePhoto'), uploadProfilePhoto);
 
 module.exports = router;

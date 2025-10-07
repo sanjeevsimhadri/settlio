@@ -1,4 +1,5 @@
 import React from 'react';
+import './Avatar.css';
 
 export interface AvatarProps {
   src?: string;
@@ -20,16 +21,16 @@ export const Avatar: React.FC<AvatarProps> = ({
   const [imageError, setImageError] = React.useState(false);
   
   const sizeClasses = {
-    small: 'w-8 h-8 text-xs',
-    medium: 'w-10 h-10 text-sm',
-    large: 'w-12 h-12 text-base',
-    xlarge: 'w-16 h-16 text-lg',
+    small: 'avatar-small',
+    medium: 'avatar-medium',
+    large: 'avatar-large',
+    xlarge: 'avatar-xlarge',
   };
 
   const avatarClasses = [
-    'inline-flex items-center justify-center rounded-full bg-gray-100 font-medium text-gray-600 select-none',
+    'avatar',
     sizeClasses[size],
-    onClick && 'cursor-pointer hover:bg-gray-200 transition-colors',
+    onClick && 'clickable',
     className,
   ]
     .filter(Boolean)

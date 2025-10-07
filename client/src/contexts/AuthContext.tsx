@@ -92,7 +92,7 @@ interface AuthContextType extends AuthState {
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => void;
   clearError: () => void;
-  updateUser: (userData: Partial<User>) => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<{ success: boolean; data: User }>;
 }
 
 // Create context
@@ -209,6 +209,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.success) {
         dispatch({ type: 'UPDATE_USER', payload: response.data });
       }
+      
+      return response;
     } catch (error: any) {
       const errorMessage = error.error || 'Profile update failed';
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });

@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { LoginCredentials, RegisterCredentials, AuthResponse, User } from '../types/auth';
+import { LoginCredentials, RegisterCredentials, AuthResponse, User, ChangePasswordCredentials, UpdateProfileData } from '../types/auth';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -85,6 +85,30 @@ export const authAPI = {
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { success: false, error: 'Profile update failed' };
+    }
+  },
+
+  // Change password
+  changePassword: async (credentials: { currentPassword: string; newPassword: string }): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await api.put('/auth/change-password', credentials);
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { success: false, error: 'Password change failed' };
+    }
+  },
+
+  // Upload profile photo
+  uploadProfilePhoto: async (formData: FormData): Promise<{ success: boolean; data: { profilePhoto: string } }> => {
+    try {
+      const response = await api.post('/auth/upload-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { success: false, error: 'Photo upload failed' };
     }
   }
 };

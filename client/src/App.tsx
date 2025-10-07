@@ -8,6 +8,7 @@ import Header from './components/Header';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Dashboard from './components/Dashboard';
+import ProfilePage from './pages/Profile';
 import './App.css';
 
 function App() {
@@ -74,10 +75,7 @@ function App() {
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <div style={{ padding: '40px', textAlign: 'center' }}>
-                      <h2>Profile</h2>
-                      <p>Profile management coming soon...</p>
-                    </div>
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />

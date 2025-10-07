@@ -26,26 +26,17 @@ const Header: React.FC = () => {
           </Link>
         </div>
         
-        <nav className="header-nav">
-          <Link to="/dashboard" className="nav-link">
-            Dashboard
-          </Link>
-          <Link to="/groups" className="nav-link">
-            Groups
-          </Link>
-          <Link to="/expenses" className="nav-link">
-            Expenses
-          </Link>
-        </nav>
+
 
         <div className="header-right">
           <div className="user-menu">
             <span className="user-name">Hello, {user?.username}</span>
             <div className="user-dropdown">
               <Avatar
+                src={user?.profilePhoto ? `http://localhost:5000${user.profilePhoto}` : undefined}
                 fallback={user?.username || 'U'}
                 size="medium"
-                className="dropdown-button avatar-button"
+                className="dropdown-button avatar-button header-avatar"
                 onClick={() => {}}
                 alt={`${user?.username} profile`}
               />
