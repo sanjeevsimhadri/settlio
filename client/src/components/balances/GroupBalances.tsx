@@ -10,6 +10,7 @@ import { Card, Badge, Avatar, LoadingButton } from '../ui';
 import { CreationInfo } from '../common/CreationInfo';
 import './Balances.css';
 import './ModernBalances.css';
+import './ModernBalanceCards.css';
 
 interface GroupBalancesProps {
   group: Group;
@@ -267,29 +268,44 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
   return (
     <div className="group-balances-modern">
       {/* Modern Header */}
-      <div className="modern-header">
-        <div className="header-left">
-          <button className="back-btn" onClick={onBack}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/>
-            </svg>
-          </button>
-          <div className="header-info">
-            <h1 className="group-title">{group.name}</h1>
-            <p className="group-subtitle">Balance Management • {group.members?.length || 0} members</p>
+      <div className="modern-balances-header">
+        <button className="modern-back-btn" onClick={onBack}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <div className="header-content">
+          <div className="header-title-section">
+            <h2 className="modern-balances-title">Group Balances</h2>
+            <p className="modern-balances-subtitle">Manage payments and settlements with {group.name}</p>
+          </div>
+          <div className="header-stats">
+            <div className="stat-card">
+              <div className="stat-value">{groupSummary?.memberBalances.length || 0}</div>
+              <div className="stat-label">Members</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{formatCurrency(groupSummary?.totalExpenses || 0)}</div>
+              <div className="stat-label">Total Spent</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{groupSummary?.simplifiedDebts.length || 0}</div>
+              <div className="stat-label">Outstanding</div>
+            </div>
           </div>
         </div>
-        <div className="header-actions">
-          <button
-            className="action-btn primary"
-            onClick={() => setIsAddingSettlement(true)}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        <button
+          className="loading-button loading-button--primary loading-button--md modern-add-expense-btn"
+          onClick={() => setIsAddingSettlement(true)}
+        >
+          <span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
             Record Payment
-          </button>
-        </div>
+          </span>
+        </button>
       </div>
 
       {/* Alert Messages */}
@@ -373,28 +389,35 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                   <h3 className="section-title">Member Balances</h3>
                   <p className="section-subtitle">Individual balance breakdown for each group member</p>
                 </div>
-                <div className="member-grid">
+                <div className="modern-member-grid">
                   {groupSummary.memberBalances.map((memberBalance) => (
-                    <div key={memberBalance.user._id} className="member-card">
-                      <div className="member-info">
-                        <div className="member-avatar">
-                          {memberBalance.user.username.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="member-details">
-                          <div className="member-name">
-                            {getUserDisplayName(memberBalance.user)}
-                          </div>
-                          <div className="balance-breakdown">
-                            <span>Owes: {formatCurrency(memberBalance.owes)}</span>
-                            <span>•</span>
-                            <span>Owed: {formatCurrency(memberBalance.owed)}</span>
+                    <div key={memberBalance.user._id} className="modern-member-balance-card">
+                      <div className="modern-member-icon">
+                        <div className={`modern-member-avatar ${getBalanceStatus(memberBalance.balance)}`}>
+                          <div className="member-avatar-inner">
+                            {memberBalance.user.username.charAt(0).toUpperCase()}
                           </div>
                         </div>
                       </div>
-                      <div className={`net-balance ${getBalanceStatus(memberBalance.balance)}`}>
-                        {memberBalance.balance === 0 && 'Settled'}
-                        {memberBalance.balance > 0 && `+${formatCurrency(memberBalance.balance)}`}
-                        {memberBalance.balance < 0 && formatCurrency(memberBalance.balance)}
+                      
+                      <div className="modern-member-content">
+                        <div className="member-header-row">
+                          <div className="member-info">
+                            <h4 className="member-name">
+                              {getUserDisplayName(memberBalance.user)}
+                            </h4>
+                            <div className="balance-breakdown">
+                              <span>Owes: {formatCurrency(memberBalance.owes)}</span>
+                              <span>•</span>
+                              <span>Owed: {formatCurrency(memberBalance.owed)}</span>
+                            </div>
+                          </div>
+                          <div className={`modern-net-balance ${getBalanceStatus(memberBalance.balance)}`}>
+                            {memberBalance.balance === 0 && 'Settled'}
+                            {memberBalance.balance > 0 && `+${formatCurrency(memberBalance.balance)}`}
+                            {memberBalance.balance < 0 && formatCurrency(memberBalance.balance)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -418,36 +441,53 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                 ) : (
                   <div className="debt-grid">
                     {groupSummary.simplifiedDebts.map((debt, index) => (
-                      <div key={`debt-${index}`} className="debt-card">
-                        <div className="debt-info">
-                          <div className="debt-arrow">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
-                            </svg>
+                      <div key={`debt-${index}`} className="modern-debt-card">
+                        <div className="debt-participants">
+                          <div className="participant-avatar from">
+                            {getUserDisplayName(debt.from).charAt(0).toUpperCase()}
                           </div>
-                          <div className="debt-description">
-                            <div className="debt-text">
-                              {getUserDisplayName(debt.from)} owes {getUserDisplayName(debt.to)}
+                          <div className="debt-flow">
+                            <div className="flow-arrow">
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
+                              </svg>
                             </div>
-                            <div className="debt-meta">
-                              Simplified payment • Settles all debts
-                            </div>
+                            <div className="debt-amount-badge">{formatCurrency(debt.amount)}</div>
+                          </div>
+                          <div className="participant-avatar to">
+                            {getUserDisplayName(debt.to).charAt(0).toUpperCase()}
                           </div>
                         </div>
-                        <div className="debt-amount">{formatCurrency(debt.amount)}</div>
+                        <div className="debt-details">
+                          <div className="debt-description">
+                            <span className="debt-payer">{getUserDisplayName(debt.from)}</span> owes <span className="debt-receiver">{getUserDisplayName(debt.to)}</span>
+                          </div>
+                          <div className="debt-meta">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="meta-icon">
+                              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Simplified payment • Settles all debts
+                          </div>
+                        </div>
                         <div className="debt-actions">
                           {(debt.from._id === currentUser?.id || debt.to._id === currentUser?.id || group.admin._id === currentUser?.id) && (
                             <>
                               <button
-                                className="action-btn small secondary"
+                                className="modern-debt-btn partial"
                                 onClick={() => handlePartialSettle(debt)}
                               >
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="btn-icon">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                                </svg>
                                 Partial
                               </button>
                               <button
-                                className="action-btn small primary"
+                                className="modern-debt-btn primary"
                                 onClick={() => handleSettleDebt(debt)}
                               >
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="btn-icon">
+                                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
                                 Settle Full
                               </button>
                             </>
@@ -476,74 +516,94 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                   <p>No payments have been recorded between members. Use the "Record Payment" button to track settlements.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {groupSummary.settlements.map((settlement) => (
-                    <Card key={settlement._id} variant="outlined" padding="medium">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-green-600">
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                <div className="modern-settlements-list">
+                  {groupSummary.settlements.map((settlement, index) => (
+                    <div 
+                      key={settlement._id} 
+                      className="modern-settlement-card"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="settlement-card-header">
+                        <div className="settlement-icon">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          </svg>
+                        </div>
+                        <div className="settlement-amount">
+                          {formatCurrency(settlement.amount)}
+                        </div>
+                        <div className={`settlement-status ${settlement.status}`}>
+                          {settlement.status}
+                        </div>
+                      </div>
+                      
+                      <div className="settlement-card-body">
+                        <div className="settlement-transaction">
+                          <div className="settlement-participant from">
+                            <div className="participant-avatar">
+                              {(settlement.fromUser?.username || settlement.fromEmail).charAt(0).toUpperCase()}
+                            </div>
+                            <div className="participant-info">
+                              <span className="participant-name">
+                                {settlement.fromUser?.username || settlement.fromEmail}
+                              </span>
+                              <span className="participant-role">Paid</span>
+                            </div>
+                          </div>
+                          
+                          <div className="settlement-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/>
                             </svg>
                           </div>
                           
-                          <div className="flex-1 min-w-0 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Avatar 
-                                alt={settlement.fromUser?.username || settlement.fromEmail}
-                                size="small"
-                              />
-                              <span className="text-sm font-medium text-gray-900 truncate">
-                                {settlement.fromUser?.username || settlement.fromEmail}
-                              </span>
-                              <span className="text-sm text-gray-600">paid</span>
-                              <Avatar 
-                                alt={settlement.toUser?.username || settlement.toEmail}
-                                size="small"
-                              />
-                              <span className="text-sm font-medium text-gray-900 truncate">
+                          <div className="settlement-participant to">
+                            <div className="participant-avatar">
+                              {(settlement.toUser?.username || settlement.toEmail).charAt(0).toUpperCase()}
+                            </div>
+                            <div className="participant-info">
+                              <span className="participant-name">
                                 {settlement.toUser?.username || settlement.toEmail}
                               </span>
+                              <span className="participant-role">Received</span>
                             </div>
-                            
-                            {settlement.comments && (
-                              <div className="text-sm text-gray-600">
-                                {settlement.comments}
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center gap-2">
-                              <Badge 
-                                variant={settlement.status === 'completed' ? 'success' : 'warning'} 
-                                size="small"
-                              >
-                                {settlement.status}
-                              </Badge>
-                              {settlement.paymentMethod && (
-                                <Badge variant="secondary" size="small">
-                                  {settlement.paymentMethod}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <CreationInfo
-                              createdAt={settlement.createdAt}
-                              createdBy={settlement.createdBy || settlement.fromUser}
-                              users={group.members.map(m => m.userId).filter((user): user is NonNullable<typeof user> => user !== null)}
-                              layout="compact"
-                              size="small"
-                              showRelativeTime={true}
-                            />
                           </div>
                         </div>
                         
-                        <div className="flex-shrink-0 text-right">
-                          <div className="text-lg font-semibold text-green-600">
-                            {formatCurrency(settlement.amount)}
+                        {settlement.comments && (
+                          <div className="settlement-description">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                            {settlement.comments}
+                          </div>
+                        )}
+                        
+                        <div className="settlement-meta">
+                          {settlement.paymentMethod && (
+                            <div className="payment-method">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                              </svg>
+                              {settlement.paymentMethod}
+                            </div>
+                          )}
+                          <div className="settlement-date">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polyline points="12,6 12,12 16,14"></polyline>
+                            </svg>
+                            {new Date(settlement.createdAt).toLocaleDateString('en-IN', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               )}

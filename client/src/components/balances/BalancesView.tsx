@@ -121,13 +121,29 @@ const BalancesView: React.FC<BalancesViewProps> = ({ group, onBack }) => {
 
   return (
     <div className="balances-view">
-      <div className="balances-header">
-        <button className="back-button" onClick={onBack}>
-          ← Back to Group
+      <div className="modern-balances-header">
+        <button className="modern-back-btn" onClick={onBack}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.42-1.41L7.83 13H20v-2z"/>
+          </svg>
         </button>
         <div className="header-content">
-          <h1>{group.name} - Balances</h1>
-          <p>{group.members.length} member{group.members.length !== 1 ? 's' : ''}</p>
+          <div className="header-title-section">
+            <h2 className="modern-balances-title">Group Balances</h2>
+            <p className="modern-balances-subtitle">Track member balances and settlements with {group.name}</p>
+          </div>
+          <div className="header-stats">
+            <div className="stat-card">
+              <div className="stat-value">{balancesData?.balances.length || 0}</div>
+              <div className="stat-label">Active Balances</div>
+            </div>
+            <div className="stat-card">
+              <div className={`stat-value ${totalBalance.type}`}>
+                {totalBalance.amount}
+              </div>
+              <div className="stat-label">Your Balance</div>
+            </div>
+          </div>
         </div>
       </div>
 
