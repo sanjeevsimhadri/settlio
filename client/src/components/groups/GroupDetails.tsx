@@ -12,6 +12,25 @@ import { RecordHeader, CreationInfo } from '../common/CreationInfo';
 import { useAuth } from '../../contexts/AuthContext';
 import './Groups.css';
 
+// Expense categories with icons for Recent Activity
+const expenseCategories = {
+  food: { label: 'Food & Dining', icon: '🍽️' },
+  transportation: { label: 'Transportation', icon: '🚗' },
+  entertainment: { label: 'Entertainment', icon: '🎬' },
+  shopping: { label: 'Shopping', icon: '🛒' },
+  bills: { label: 'Bills & Utilities', icon: '💡' },
+  travel: { label: 'Travel & Hotels', icon: '✈️' },
+  healthcare: { label: 'Healthcare', icon: '🏥' },
+  education: { label: 'Education', icon: '📚' },
+  groceries: { label: 'Groceries', icon: '🥬' },
+  fitness: { label: 'Fitness & Sports', icon: '💪' },
+  gifts: { label: 'Gifts & Donations', icon: '🎁' },
+  home: { label: 'Home & Garden', icon: '🏠' },
+  pets: { label: 'Pets', icon: '🐕' },
+  business: { label: 'Business', icon: '💼' },
+  other: { label: 'Other', icon: '📦' }
+};
+
 interface GroupDetailsProps {
   group: Group;
   onBack: () => void;
@@ -72,6 +91,80 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
   useEffect(() => {
     fetchGroupData();
   }, [group._id]);
+
+  // Get category icon with smart detection
+  const getCategoryIcon = (category?: string, description?: string) => {
+    // If category is provided and valid, use it
+    if (category && expenseCategories[category as keyof typeof expenseCategories]) {
+      return expenseCategories[category as keyof typeof expenseCategories].icon;
+    }
+    
+    // Smart category detection based on expense description
+    if (description) {
+      const desc = description.toLowerCase();
+      
+      // Food & Dining keywords
+      if (desc.includes('dinner') || desc.includes('lunch') || desc.includes('breakfast') || 
+          desc.includes('restaurant') || desc.includes('food') || desc.includes('eat') ||
+          desc.includes('coffee') || desc.includes('drink') || desc.includes('meal') ||
+          desc.includes('pizza') || desc.includes('burger') || desc.includes('cafe')) {
+        return expenseCategories.food.icon;
+      }
+      
+      // Transportation keywords
+      if (desc.includes('uber') || desc.includes('taxi') || desc.includes('cab') ||
+          desc.includes('bus') || desc.includes('train') || desc.includes('metro') ||
+          desc.includes('transport') || desc.includes('fuel') || desc.includes('gas') ||
+          desc.includes('parking') || desc.includes('ride')) {
+        return expenseCategories.transportation.icon;
+      }
+      
+      // Travel keywords
+      if (desc.includes('flight') || desc.includes('hotel') || desc.includes('booking') ||
+          desc.includes('ticket') || desc.includes('travel') || desc.includes('trip') ||
+          desc.includes('vacation') || desc.includes('airbnb') || desc.includes('accommodation')) {
+        return expenseCategories.travel.icon;
+      }
+      
+      // Entertainment keywords
+      if (desc.includes('movie') || desc.includes('cinema') || desc.includes('game') ||
+          desc.includes('concert') || desc.includes('show') || desc.includes('party') ||
+          desc.includes('club') || desc.includes('entertainment') || desc.includes('fun')) {
+        return expenseCategories.entertainment.icon;
+      }
+      
+      // Shopping keywords
+      if (desc.includes('shop') || desc.includes('buy') || desc.includes('purchase') ||
+          desc.includes('store') || desc.includes('mall') || desc.includes('cloth') ||
+          desc.includes('shoes') || desc.includes('amazon') || desc.includes('online')) {
+        return expenseCategories.shopping.icon;
+      }
+      
+      // Bills & Utilities keywords
+      if (desc.includes('bill') || desc.includes('electric') || desc.includes('water') ||
+          desc.includes('internet') || desc.includes('phone') || desc.includes('utility') ||
+          desc.includes('rent') || desc.includes('maintenance') || desc.includes('wifi')) {
+        return expenseCategories.bills.icon;
+      }
+      
+      // Groceries keywords
+      if (desc.includes('grocery') || desc.includes('vegetables') || desc.includes('fruit') ||
+          desc.includes('supermarket') || desc.includes('market') || desc.includes('supplies') ||
+          desc.includes('milk') || desc.includes('bread') || desc.includes('groceries')) {
+        return expenseCategories.groceries.icon;
+      }
+      
+      // Healthcare keywords
+      if (desc.includes('doctor') || desc.includes('hospital') || desc.includes('medicine') ||
+          desc.includes('medical') || desc.includes('health') || desc.includes('pharmacy') ||
+          desc.includes('clinic') || desc.includes('treatment')) {
+        return expenseCategories.healthcare.icon;
+      }
+    }
+    
+    // Default to other category
+    return expenseCategories.other.icon;
+  };
 
   // Get user's balance from group summary
   const getUserBalance = () => {
@@ -280,7 +373,9 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                     <div className="activity-list">
                       {getRecentActivity().map((expense) => (
                         <div key={expense._id} className="activity-item">
-                          <div className="activity-icon">💰</div>
+                          <div className="activity-icon">
+                            {getCategoryIcon(expense.category, expense.description)}
+                          </div>
                           <div className="activity-details">
                             <div className="activity-title">{expense.description}</div>
                             <div className="activity-subtitle">
@@ -328,67 +423,22 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
               </LoadingButton>
             </div>
 
-            {/* Add Member Form */}
+            {/* Add Member Modal */}
             {isAddingMember && (
-              <div className="add-member-form">
-                <h4>Add New Member</h4>
-                <form onSubmit={handleSubmit(onAddMember)}>
-                  <div className="form-group">
-                    <label htmlFor="email">Member Email</label>
-                    <input
-                      id="email"
-                      type="email"
-                      {...register('email')}
-                      className={`form-input ${errors.email ? 'error' : ''}`}
-                      placeholder="Enter member's email address"
-                      autoComplete="off"
-                    />
-                    {errors.email && (
-                      <span className="error-message">{errors.email.message}</span>
-                    )}
-
-                    {/* Search Results */}
-                    {searchLoading && (
-                      <div className="search-loading">Searching users...</div>
-                    )}
-                    
-                    {searchedUsers.length > 0 && (
-                      <div className="search-results">
-                        {searchedUsers.map(user => (
-                          <div key={user._id} className="search-result">
-                            <div className="user-info">
-                              <span className="username">{user.username}</span>
-                              <span className="email">{user.email}</span>
-                            </div>
-                            <button
-                              type="button"
-                              className="button small"
-                              onClick={() => {
-                                // Set the email in the form
-                                reset({ email: user.email });
-                                setSearchedUsers([]);
-                              }}
-                            >
-                              Select
-                            </button>
-                          </div>
-                        ))}
+              <div className="member-modal-overlay">
+                <div className="member-modal-container">
+                  {/* Modal Header */}
+                  <div className="member-modal-header">
+                    <div className="header-content">
+                      <div className="header-icon">👥</div>
+                      <div className="header-text">
+                        <h2>Add New Member</h2>
+                        <p>Invite someone to join <span className="group-name">{group.name}</span></p>
                       </div>
-                    )}
-                  </div>
-
-                  {memberError && (
-                    <div className="alert error">{memberError}</div>
-                  )}
-
-                  {memberSuccess && (
-                    <div className="alert success">{memberSuccess}</div>
-                  )}
-
-                  <div className="form-actions">
-                    <LoadingButton
-                      type="button"
-                      variant="secondary"
+                    </div>
+                    <button 
+                      type="button" 
+                      className="modal-close-btn" 
                       onClick={() => {
                         setIsAddingMember(false);
                         reset();
@@ -396,13 +446,133 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                         setSearchedUsers([]);
                       }}
                     >
-                      Cancel
-                    </LoadingButton>
-                    <LoadingButton type="submit" variant="primary">
-                      Add Member
-                    </LoadingButton>
+                      ✕
+                    </button>
                   </div>
-                </form>
+
+                  {/* Error/Success Alerts */}
+                  {memberError && (
+                    <div className="alert-banner error">
+                      <span className="alert-icon">⚠️</span>
+                      <span className="alert-text">{memberError}</span>
+                    </div>
+                  )}
+
+                  {memberSuccess && (
+                    <div className="alert-banner success">
+                      <span className="alert-icon">✓</span>
+                      <span className="alert-text">{memberSuccess}</span>
+                    </div>
+                  )}
+
+                  {/* Form Content */}
+                  <form onSubmit={handleSubmit(onAddMember)} className="member-form">
+                    {/* Email Input Section */}
+                    <div className="form-section">
+                      <h3 className="section-title">📫 Invitation Details</h3>
+                      
+                      <div className="field-group">
+                        <label className="field-label">
+                          <span className="label-text">Email Address *</span>
+                          <span className="label-icon">📎</span>
+                        </label>
+                        <div className="input-wrapper">
+                          <input
+                            id="email"
+                            type="email"
+                            className={`member-input ${errors.email ? 'error' : ''}`}
+                            placeholder="Enter member's email address (e.g. john@example.com)"
+                            autoComplete="off"
+                            {...register('email')}
+                          />
+                          <div className="input-icon">📧</div>
+                        </div>
+                        {errors.email && (
+                          <span className="field-error">{errors.email.message}</span>
+                        )}
+
+                        
+                        {/* Search Loading State */}
+                        {searchLoading && (
+                          <div className="search-loading">
+                            <div className="loading-spinner"></div>
+                            <span>Searching for users...</span>
+                          </div>
+                        )}
+                        
+                        {/* Search Results */}
+                        {searchedUsers.length > 0 && (
+                          <div className="search-results">
+                            <div className="results-header">
+                              <span className="results-count">{searchedUsers.length} user{searchedUsers.length !== 1 ? 's' : ''} found</span>
+                            </div>
+                            <div className="results-list">
+                              {searchedUsers.map(user => {
+                                const userInitial = (user.username || user.email)[0].toUpperCase();
+                                return (
+                                  <div key={user._id} className="user-result-card">
+                                    <div className="user-avatar">{userInitial}</div>
+                                    <div className="user-details">
+                                      <div className="user-name">{user.username}</div>
+                                      <div className="user-email">{user.email}</div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="select-user-btn"
+                                      onClick={() => {
+                                        reset({ email: user.email });
+                                        setSearchedUsers([]);
+                                      }}
+                                    >
+                                      <span className="btn-icon">✓</span>
+                                      Select
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Information Section */}
+                    <div className="info-section">
+                      <div className="info-card">
+                        <div className="info-icon">📝</div>
+                        <div className="info-content">
+                          <h4>How it works</h4>
+                          <p>Enter an email address to invite someone to this group. If they're not registered yet, they'll receive an invitation to join Settlio.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Form Actions */}
+                    <div className="member-form-actions">
+                      <button
+                        type="button"
+                        className="action-btn cancel"
+                        onClick={() => {
+                          setIsAddingMember(false);
+                          reset();
+                          setMemberError('');
+                          setSearchedUsers([]);
+                        }}
+                      >
+                        <span className="btn-icon">✕</span>
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="action-btn primary"
+                        disabled={!watch('email') || !!errors.email}
+                      >
+                        <span className="btn-icon">📧</span>
+                        Send Invitation
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 

@@ -4,6 +4,7 @@ export interface Expense {
   _id: string;
   groupId: string;
   description: string;
+  category?: string;
   amount: number;
   currency: string;
   paidByEmail: string;
@@ -29,6 +30,7 @@ export interface SplitAmongMember {
 export interface CreateExpenseData {
   groupId: string;
   description: string;
+  category?: string;
   amount: number;
   currency?: string;
   paidByEmail: string;
