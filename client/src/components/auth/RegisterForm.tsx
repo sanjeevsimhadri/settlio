@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { registerSchema, RegisterFormData } from '../../utils/validation';
+import { registerSchema, RegisterFormData, normalizeMobileForRegistration } from '../../utils/validation';
 import { LoadingButton, Alert, Input, Card } from '../ui';
 import './Auth.css';
 
@@ -41,8 +41,9 @@ const RegisterForm: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setSubmitError('');
-      // Remove confirmPassword from the data before sending to API
+      // Remove confirmPassword and normalize mobile number
       const { confirmPassword, ...registrationData } = data;
+      registrationData.mobile = normalizeMobileForRegistration(registrationData.mobile);
       await registerUser(registrationData);
       reset();
       // Navigation will happen automatically via useEffect above
@@ -60,15 +61,16 @@ const RegisterForm: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-          {/* Username Field */}
+          {/* Name Field */}
           <Input
-            label="Username"
+            label="Full Name"
             type="text"
-            {...register('username')}
-            error={errors.username?.message}
-            placeholder="Choose a username"
-            autoComplete="username"
+            {...register('name')}
+            error={errors.name?.message}
+            placeholder="Enter your full name"
+            autoComplete="name"
             fullWidth
+            required
           />
 
           {/* Email Field */}
@@ -80,6 +82,20 @@ const RegisterForm: React.FC = () => {
             placeholder="Enter your email"
             autoComplete="email"
             fullWidth
+            required
+          />
+
+          {/* Mobile Number Field */}
+          <Input
+            label="Mobile Number"
+            type="tel"
+            {...register('mobile')}
+            error={errors.mobile?.message}
+            placeholder="Enter 10-digit mobile number"
+            autoComplete="tel"
+            fullWidth
+            required
+            helperText="Enter your mobile number (e.g., 9494698235 or +919494698235)"
           />
 
           {/* Password Field */}

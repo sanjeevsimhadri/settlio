@@ -10,7 +10,7 @@ const getGroupBalances = async (req, res) => {
     const currentUserEmail = req.user.email;
 
     // Verify user is member of the group
-    const group = await Group.findById(groupId).populate('members.userId', 'username email');
+    const group = await Group.findById(groupId).populate('members.userId', 'username email profilePhoto');
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
     }
@@ -41,6 +41,7 @@ const getGroupBalances = async (req, res) => {
             memberEmail: member.email,
             memberUserId: member.userId?._id,
             memberName: member.fullName || (member.userId ? member.userId.username : member.email.split('@')[0]),
+            memberUser: member.userId, // Include full user object with profilePhoto
             balanceAmount: Math.round(netBalance * 100) / 100, // Round to 2 decimal places
             currency: group.currency || 'INR',
             status: member.status
@@ -75,7 +76,7 @@ const getGroupDebts = async (req, res) => {
     const { memberEmail, startDate, endDate } = req.query;
 
     // Verify user is member of the group
-    const group = await Group.findById(groupId).populate('members.userId', 'username email');
+    const group = await Group.findById(groupId).populate('members.userId', 'username email profilePhoto');
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
     }
@@ -99,7 +100,7 @@ const getGroupDebts = async (req, res) => {
 
     // Get expenses
     const expenses = await Expense.find(expenseQuery)
-      .populate('paidByUserId', 'username email')
+      .populate('paidByUserId', 'username email profilePhoto')
       .sort({ date: -1 });
 
     // Get settlements
@@ -111,7 +112,7 @@ const getGroupDebts = async (req, res) => {
     }
 
     const settlements = await Settlement.find(settlementQuery)
-      .populate(['fromUserId', 'toUserId'], 'username email')
+      .populate(['fromUserId', 'toUserId'], 'username email profilePhoto')
       .sort({ date: -1 });
 
     const debts = [];
@@ -251,7 +252,7 @@ const createSettlement = async (req, res) => {
     console.log('Settlement from:', fromEmail, 'to:', toEmail);
 
     // Verify group exists and user is member
-    const group = await Group.findById(groupId).populate('members.userId', 'username email');
+    const group = await Group.findById(groupId).populate('members.userId', 'username email profilePhoto');
     if (!group) {
       return res.status(404).json({ error: 'Group not found' });
     }
@@ -357,8 +358,8 @@ const createSettlement = async (req, res) => {
     await settlement.save();
 
     // Populate settlement with user info
-    await settlement.populate('fromUserId', 'username email');
-    await settlement.populate('toUserId', 'username email');
+    await settlement.populate('fromUserId', 'username email profilePhoto');
+    await settlement.populate('toUserId', 'username email profilePhoto');
 
     // TODO: Re-enable balance calculation after fixing the core issue
     // const updatedBalance = await Settlement.calculateBalanceBetween(groupId, fromEmail, toEmail);
@@ -419,7 +420,7 @@ const getSettlementHistory = async (req, res) => {
 
     // Get settlements with pagination
     const settlements = await Settlement.find({ groupId })
-      .populate(['fromUserId', 'toUserId'], 'username email')
+      .populate(['fromUserId', 'toUserId'], 'username email profilePhoto')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);

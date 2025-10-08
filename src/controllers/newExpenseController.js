@@ -212,8 +212,8 @@ const getExpenseById = asyncHandler(async (req, res, next) => {
   try {
     const expense = await Expense.findById(expenseId)
       .populate('groupId', 'name currency')
-      .populate('paidByUserId', 'username email')
-      .populate('splitAmong.userId', 'username email');
+      .populate('paidByUserId', 'username email profilePhoto')
+      .populate('splitAmong.userId', 'username email profilePhoto');
 
     if (!expense) {
       return next(new ErrorResponse('Expense not found', 404));

@@ -14,7 +14,7 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSave }) => 
   const [success, setSuccess] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    username: user?.username || '',
+    name: user?.name || '',
     email: user?.email || '',
     mobile: user?.mobile || '',
   });
@@ -24,15 +24,15 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSave }) => 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    // Username validation
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    } else if (formData.username.length > 30) {
-      newErrors.username = 'Username cannot exceed 30 characters';
-    } else if (!/^[a-zA-Z0-9_.-]+$/.test(formData.username)) {
-      newErrors.username = 'Username can only contain letters, numbers, dots, dashes, and underscores';
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (formData.name.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (formData.name.length > 50) {
+      newErrors.name = 'Name cannot exceed 50 characters';
+    } else if (!/^[a-zA-Z\s\-'\.]+$/.test(formData.name)) {
+      newErrors.name = 'Name can only contain letters, spaces, hyphens, apostrophes, and dots';
     }
 
     // Email validation
@@ -83,7 +83,7 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSave }) => 
     try {
       // Only send fields that have changed
       const updatedFields: any = {};
-      if (formData.username !== user?.username) updatedFields.username = formData.username;
+      if (formData.name !== user?.name) updatedFields.name = formData.name;
       if (formData.email !== user?.email) updatedFields.email = formData.email;
       if (formData.mobile !== user?.mobile) updatedFields.mobile = formData.mobile;
 
@@ -103,7 +103,7 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSave }) => 
   };
 
   const hasChanges = 
-    formData.username !== user?.username ||
+    formData.name !== user?.name ||
     formData.email !== user?.email ||
     formData.mobile !== user?.mobile;
 
@@ -120,14 +120,14 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({ onSave }) => 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="md:col-span-1">
           <Input
-            label="Username"
+            label="Name"
             type="text"
-            value={formData.username}
-            onChange={handleInputChange('username')}
-            error={errors.username}
-            placeholder="Enter your username"
+            value={formData.name}
+            onChange={handleInputChange('name')}
+            error={errors.name}
+            placeholder="Enter your full name"
             required
-            helperText="Your unique username (3-30 characters)"
+            helperText="Your display name (2-50 characters, spaces allowed)"
           />
         </div>
 

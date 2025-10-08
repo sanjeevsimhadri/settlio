@@ -2,16 +2,17 @@ const Joi = require('joi');
 
 // User registration validation schema
 const registerSchema = Joi.object({
-  username: Joi.string()
-    .alphanum()
-    .min(3)
-    .max(30)
+  name: Joi.string()
+    .trim()
+    .min(2)
+    .max(50)
+    .pattern(/^[a-zA-Z\s\-'\.]+$/)
     .required()
     .messages({
-      'string.alphanum': 'Username must only contain alphanumeric characters',
-      'string.min': 'Username must be at least 3 characters long',
-      'string.max': 'Username cannot exceed 30 characters',
-      'any.required': 'Username is required'
+      'string.min': 'Name must be at least 2 characters long',
+      'string.max': 'Name cannot exceed 50 characters',
+      'string.pattern.base': 'Name can only contain letters, spaces, hyphens, apostrophes, and dots',
+      'any.required': 'Name is required'
     }),
   email: Joi.string()
     .email()
@@ -19,6 +20,24 @@ const registerSchema = Joi.object({
     .messages({
       'string.email': 'Please enter a valid email address',
       'any.required': 'Email is required'
+    }),
+  mobile: Joi.string()
+    .required()
+    .custom((value, helpers) => {
+      const cleaned = value.replace(/[\s-()]/g, '');
+      // Accept both international format and Indian format
+      const mobilePatternWithCode = /^\+[1-9]\d{1,14}$/;
+      const indianMobilePattern = /^[6-9]\d{9}$/;
+      
+      if (mobilePatternWithCode.test(cleaned) || indianMobilePattern.test(cleaned)) {
+        return value;
+      }
+      
+      return helpers.error('custom.invalid');
+    })
+    .messages({
+      'any.required': 'Mobile number is required',
+      'custom.invalid': 'Please enter a valid mobile number'
     }),
   password: Joi.string()
     .min(6)
@@ -33,12 +52,23 @@ const registerSchema = Joi.object({
 
 // User login validation schema
 const loginSchema = Joi.object({
-  email: Joi.string()
-    .email()
+  identifier: Joi.string()
     .required()
+    .custom((value, helpers) => {
+      // Check if it's a valid email
+      const emailPattern = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      // Check if it's a valid mobile number (with country code)
+      const mobilePattern = /^\+[1-9]\d{1,14}$/;
+      
+      if (emailPattern.test(value) || mobilePattern.test(value.replace(/[\s-()]/g, ''))) {
+        return value;
+      }
+      
+      return helpers.error('custom.invalid');
+    })
     .messages({
-      'string.email': 'Please enter a valid email address',
-      'any.required': 'Email is required'
+      'any.required': 'Email or mobile number is required',
+      'custom.invalid': 'Please enter a valid email address or mobile number with country code'
     }),
   password: Joi.string()
     .required()

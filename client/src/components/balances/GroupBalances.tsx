@@ -8,9 +8,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../common';
 import { Card, Badge, Avatar, LoadingButton } from '../ui';
 import { CreationInfo } from '../common/CreationInfo';
+import { getAvatarProps, getUserInitial } from '../../utils/profilePhotoUtils';
 import './Balances.css';
 import './ModernBalances.css';
 import './ModernBalanceCards.css';
+import './ProfilePhotoAvatars.css';
 
 interface GroupBalancesProps {
   group: Group;
@@ -395,7 +397,27 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                       <div className="modern-member-icon">
                         <div className={`modern-member-avatar ${getBalanceStatus(memberBalance.balance)}`}>
                           <div className="member-avatar-inner">
-                            {memberBalance.user.username.charAt(0).toUpperCase()}
+                            {memberBalance.user.profilePhoto ? (
+                              <img 
+                                src={`http://localhost:5000${memberBalance.user.profilePhoto}`} 
+                                alt={memberBalance.user.username}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (fallback) {
+                                    fallback.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <div 
+                              className="avatar-fallback"
+                              style={{ 
+                                display: memberBalance.user.profilePhoto ? 'none' : 'flex'
+                              }}
+                            >
+                              {memberBalance.user.username.charAt(0).toUpperCase()}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -444,7 +466,39 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                       <div key={`debt-${index}`} className="modern-debt-card">
                         <div className="debt-participants">
                           <div className="participant-avatar from">
-                            {getUserDisplayName(debt.from).charAt(0).toUpperCase()}
+                            {debt.from.profilePhoto ? (
+                              <img 
+                                src={`http://localhost:5000${debt.from.profilePhoto}`} 
+                                alt={debt.from.username}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  borderRadius: '50%',
+                                  objectFit: 'cover'
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (fallback) {
+                                    fallback.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <div 
+                              className="avatar-fallback"
+                              style={{ 
+                                display: debt.from.profilePhoto ? 'none' : 'flex',
+                                width: '100%',
+                                height: '100%',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.875rem',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {debt.from.username.charAt(0).toUpperCase()}
+                            </div>
                           </div>
                           <div className="debt-flow">
                             <div className="flow-arrow">
@@ -455,7 +509,39 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                             <div className="debt-amount-badge">{formatCurrency(debt.amount)}</div>
                           </div>
                           <div className="participant-avatar to">
-                            {getUserDisplayName(debt.to).charAt(0).toUpperCase()}
+                            {debt.to.profilePhoto ? (
+                              <img 
+                                src={`http://localhost:5000${debt.to.profilePhoto}`} 
+                                alt={debt.to.username}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  borderRadius: '50%',
+                                  objectFit: 'cover'
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                  if (fallback) {
+                                    fallback.style.display = 'flex';
+                                  }
+                                }}
+                              />
+                            ) : null}
+                            <div 
+                              className="avatar-fallback"
+                              style={{ 
+                                display: debt.to.profilePhoto ? 'none' : 'flex',
+                                width: '100%',
+                                height: '100%',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.875rem',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {debt.to.username.charAt(0).toUpperCase()}
+                            </div>
                           </div>
                         </div>
                         <div className="debt-details">
@@ -541,7 +627,39 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                         <div className="settlement-transaction">
                           <div className="settlement-participant from">
                             <div className="participant-avatar">
-                              {(settlement.fromUser?.username || settlement.fromEmail).charAt(0).toUpperCase()}
+                              {settlement.fromUser?.profilePhoto ? (
+                                <img 
+                                  src={`http://localhost:5000${settlement.fromUser.profilePhoto}`} 
+                                  alt={settlement.fromUser.username}
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    borderRadius: '50%',
+                                    objectFit: 'cover'
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (fallback) {
+                                      fallback.style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div 
+                                className="avatar-fallback"
+                                style={{ 
+                                  display: settlement.fromUser?.profilePhoto ? 'none' : 'flex',
+                                  width: '100%',
+                                  height: '100%',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.875rem',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                {(settlement.fromUser?.username || settlement.fromEmail).charAt(0).toUpperCase()}
+                              </div>
                             </div>
                             <div className="participant-info">
                               <span className="participant-name">
@@ -559,7 +677,39 @@ const GroupBalances: React.FC<GroupBalancesProps> = ({ group, onBack }) => {
                           
                           <div className="settlement-participant to">
                             <div className="participant-avatar">
-                              {(settlement.toUser?.username || settlement.toEmail).charAt(0).toUpperCase()}
+                              {settlement.toUser?.profilePhoto ? (
+                                <img 
+                                  src={`http://localhost:5000${settlement.toUser.profilePhoto}`} 
+                                  alt={settlement.toUser.username}
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    borderRadius: '50%',
+                                    objectFit: 'cover'
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (fallback) {
+                                      fallback.style.display = 'flex';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div 
+                                className="avatar-fallback"
+                                style={{ 
+                                  display: settlement.toUser?.profilePhoto ? 'none' : 'flex',
+                                  width: '100%',
+                                  height: '100%',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.875rem',
+                                  fontWeight: '600'
+                                }}
+                              >
+                                {(settlement.toUser?.username || settlement.toEmail).charAt(0).toUpperCase()}
+                              </div>
                             </div>
                             <div className="participant-info">
                               <span className="participant-name">

@@ -2,6 +2,45 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Function to generate unique username from name and email
+const generateUsername = async function(name, email) {
+  const User = mongoose.model('User');
+  
+  // Create base username from name (remove spaces, convert to lowercase)
+  let baseUsername = name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+  
+  // If name is too short, use email prefix
+  if (baseUsername.length < 3) {
+    baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+  }
+  
+  // Ensure minimum length
+  if (baseUsername.length < 3) {
+    baseUsername = 'user' + baseUsername;
+  }
+  
+  // Truncate if too long
+  if (baseUsername.length > 25) {
+    baseUsername = baseUsername.substring(0, 25);
+  }
+  
+  let username = baseUsername;
+  let counter = 1;
+  
+  // Check if username exists and add number if needed
+  while (await User.findOne({ username })) {
+    username = baseUsername + counter;
+    if (username.length > 30) {
+      // If adding counter makes it too long, truncate base and try again
+      baseUsername = baseUsername.substring(0, 30 - counter.toString().length);
+      username = baseUsername + counter;
+    }
+    counter++;
+  }
+  
+  return username;
+};
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -10,6 +49,20 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: [3, 'Username must be at least 3 characters long'],
     maxlength: [30, 'Username cannot exceed 30 characters']
+  },
+  name: {
+    type: String,
+    required: [true, 'Name is required'],
+    trim: true,
+    minlength: [2, 'Name must be at least 2 characters long'],
+    maxlength: [50, 'Name cannot exceed 50 characters'],
+    validate: {
+      validator: function(v) {
+        // Allow letters, spaces, hyphens, apostrophes, and dots
+        return /^[a-zA-Z\s\-'\.]+$/.test(v);
+      },
+      message: 'Name can only contain letters, spaces, hyphens, apostrophes, and dots'
+    }
   },
   email: {
     type: String,
@@ -30,13 +83,17 @@ const userSchema = new mongoose.Schema({
   },
   mobile: {
     type: String,
+    required: [true, 'Mobile number is required'],
+    unique: true,
     trim: true,
-    sparse: true, // Allows multiple null values
     validate: {
       validator: function(v) {
-        return !v || /^\+[1-9]\d{1,14}$/.test(v.replace(/[\s-()]/g, ''));
+        if (!v) return false;
+        const cleaned = v.replace(/[\s-()]/g, '');
+        // Accept both international format and Indian format
+        return /^\+[1-9]\d{1,14}$/.test(cleaned) || /^[6-9]\d{9}$/.test(cleaned);
       },
-      message: 'Please enter a valid mobile number with country code'
+      message: 'Please enter a valid mobile number'
     }
   },
   profilePhoto: {

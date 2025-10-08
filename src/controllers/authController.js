@@ -7,22 +7,73 @@ const { syncUserWithGroupInvitations } = require('../utils/groupSync');
 // @route   POST /api/auth/register
 // @access  Public
 const register = asyncHandler(async (req, res, next) => {
-  const { username, email, password } = req.body;
+  const { name, email, mobile, password } = req.body;
+
+  // Normalize mobile number (add +91 if it's a 10-digit Indian number)
+  let normalizedMobile = mobile;
+  const cleanMobile = mobile.replace(/[\s-()]/g, '');
+  if (/^[6-9]\d{9}$/.test(cleanMobile)) {
+    normalizedMobile = `+91${cleanMobile}`;
+  }
 
   // Check if user already exists
   const existingUser = await User.findOne({
-    $or: [{ email }, { username }]
+    $or: [{ email }, { mobile: normalizedMobile }]
   });
 
   if (existingUser) {
-    const field = existingUser.email === email ? 'email' : 'username';
-    return next(new ErrorResponse(`User with this ${field} already exists`, 400));
+    if (existingUser.email === email) {
+      return next(new ErrorResponse('User with this email already exists', 400));
+    } else {
+      return next(new ErrorResponse('User with this mobile number already exists', 400));
+    }
   }
+
+  // Generate unique username from name and email
+  const generateUsername = async function(name, email) {
+    // Create base username from name (remove spaces, convert to lowercase)
+    let baseUsername = name.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+    
+    // If name is too short, use email prefix
+    if (baseUsername.length < 3) {
+      baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+    }
+    
+    // Ensure minimum length
+    if (baseUsername.length < 3) {
+      baseUsername = 'user' + baseUsername;
+    }
+    
+    // Truncate if too long
+    if (baseUsername.length > 25) {
+      baseUsername = baseUsername.substring(0, 25);
+    }
+    
+    let username = baseUsername;
+    let counter = 1;
+    
+    // Check if username exists and add number if needed
+    while (await User.findOne({ username })) {
+      username = baseUsername + counter;
+      if (username.length > 30) {
+        // If adding counter makes it too long, truncate base and try again
+        baseUsername = baseUsername.substring(0, 30 - counter.toString().length);
+        username = baseUsername + counter;
+      }
+      counter++;
+    }
+    
+    return username;
+  };
+
+  const username = await generateUsername(name, email);
 
   // Create user
   const user = await User.create({
     username,
+    name,
     email,
+    mobile: normalizedMobile,
     password
   });
 
@@ -42,20 +93,40 @@ const register = asyncHandler(async (req, res, next) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body;
 
-  // Find user by email and include password field
-  const user = await User.findOne({ email }).select('+password');
+  // Check if identifier is provided
+  if (!identifier) {
+    return next(new ErrorResponse('Email or mobile number is required', 400));
+  }
+
+  // Normalize mobile number for search (add +91 if it's a 10-digit Indian number)
+  let normalizedIdentifier = identifier;
+  const cleanIdentifier = identifier.replace(/[\s-()]/g, '');
+  
+  // If it's a 10-digit number starting with 6-9, add +91
+  if (/^[6-9]\d{9}$/.test(cleanIdentifier)) {
+    normalizedIdentifier = `+91${cleanIdentifier}`;
+  }
+
+  // Find user by email or mobile number (search both original and normalized)
+  const user = await User.findOne({
+    $or: [
+      { email: identifier },
+      { mobile: identifier },
+      { mobile: normalizedIdentifier }
+    ]
+  }).select('+password');
 
   if (!user) {
-    return next(new ErrorResponse('Invalid credentials', 401));
+    return next(new ErrorResponse('Invalid email or mobile number', 401));
   }
 
   // Check if password matches
   const isMatch = await user.matchPassword(password);
 
   if (!isMatch) {
-    return next(new ErrorResponse('Invalid credentials', 401));
+    return next(new ErrorResponse('Incorrect password', 401));
   }
 
   sendTokenResponse(user, 200, res);
@@ -79,6 +150,7 @@ const getMe = asyncHandler(async (req, res, next) => {
 const updateProfile = asyncHandler(async (req, res, next) => {
   const fieldsToUpdate = {
     username: req.body.username,
+    name: req.body.name,
     email: req.body.email,
     mobile: req.body.mobile,
     profilePhoto: req.body.profilePhoto

@@ -21,7 +21,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   placeholder = "Enter phone number",
   required = false,
 }) => {
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
 
   // Parse initial value only once on mount

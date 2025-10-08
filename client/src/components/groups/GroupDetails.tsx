@@ -8,9 +8,10 @@ import { expensesAPI, Expense, CreateExpenseData, SplitAmongMember } from '../..
 import { balancesAPI, GroupSummary } from '../../services/balancesAPI';
 import GroupExpenses from '../expenses/GroupExpenses';
 import GroupBalances from '../balances/GroupBalances';
-import { Card, LoadingButton, Input, Badge, Alert } from '../ui';
+import { Card, LoadingButton, Input, Badge, Alert, Avatar } from '../ui';
 import { RecordHeader, CreationInfo } from '../common/CreationInfo';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAvatarProps, getUserInitial } from '../../utils/profilePhotoUtils';
 import './Groups.css';
 
 // Expense categories with icons for Recent Activity
@@ -652,7 +653,39 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                                       onClick={() => toggleSplitMember(member.email)}
                                     >
                                       <div className="member-avatar-small">
-                                        {displayName.charAt(0).toUpperCase()}
+                                        {member.userId?.profilePhoto ? (
+                                          <img 
+                                            src={`http://localhost:5000${member.userId.profilePhoto}`} 
+                                            alt={displayName}
+                                            style={{ 
+                                              width: '100%', 
+                                              height: '100%', 
+                                              borderRadius: '50%',
+                                              objectFit: 'cover'
+                                            }}
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = 'none';
+                                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                              if (fallback) {
+                                                fallback.style.display = 'flex';
+                                              }
+                                            }}
+                                          />
+                                        ) : null}
+                                        <div 
+                                          className="avatar-fallback"
+                                          style={{ 
+                                            display: member.userId?.profilePhoto ? 'none' : 'flex',
+                                            width: '100%',
+                                            height: '100%',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '600'
+                                          }}
+                                        >
+                                          {displayName.charAt(0).toUpperCase()}
+                                        </div>
                                       </div>
                                       <span className="member-name">{displayName}</span>
                                       {isSelected && (
@@ -1154,8 +1187,41 @@ const GroupDetails: React.FC<GroupDetailsProps> = ({ group, onBack }) => {
                         borderColor: memberTypeData.borderColor
                       }}
                     >
-                      <div className="member-avatar-large" style={{ color: memberTypeData.color }}>
-                        {avatarText}
+                      <div className="member-avatar-large">
+                        {memberUser?.profilePhoto ? (
+                          <img 
+                            src={`http://localhost:5000${memberUser.profilePhoto}`} 
+                            alt={displayName}
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (fallback) {
+                                fallback.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className="avatar-fallback"
+                          style={{ 
+                            display: memberUser?.profilePhoto ? 'none' : 'flex',
+                            color: memberTypeData.color,
+                            width: '100%',
+                            height: '100%',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.25rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {avatarText}
+                        </div>
                       </div>
                     </div>
                     

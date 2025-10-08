@@ -3,8 +3,11 @@ import { balancesAPI, Balance, BalancesResponse } from '../../services/balancesA
 import { Group } from '../../services/groupsAPI';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../common';
+import { Avatar } from '../ui';
 import SettlementForm from './SettlementForm';
+import { getAvatarProps, getUserInitial } from '../../utils/profilePhotoUtils';
 import './Balances.css';
+import './ProfilePhotoAvatars.css';
 
 interface BalancesViewProps {
   group: Group;
@@ -187,7 +190,40 @@ const BalancesView: React.FC<BalancesViewProps> = ({ group, onBack }) => {
                 <div key={index} className="balance-item">
                   <div className="member-info">
                     <div className="member-avatar">
-                      {balance.memberName.charAt(0).toUpperCase()}
+                      {balance.memberUser?.profilePhoto ? (
+                        <img 
+                          src={`http://localhost:5000${balance.memberUser.profilePhoto}`} 
+                          alt={balance.memberName}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) {
+                              fallback.style.display = 'flex';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className="avatar-fallback"
+                        style={{ 
+                          display: balance.memberUser?.profilePhoto ? 'none' : 'flex',
+                          width: '100%',
+                          height: '100%',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          color: '#374151'
+                        }}
+                      >
+                        {balance.memberName.charAt(0).toUpperCase()}
+                      </div>
                     </div>
                     <div className="member-details">
                       <h4 className="member-name">

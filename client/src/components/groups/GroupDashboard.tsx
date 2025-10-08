@@ -138,7 +138,7 @@ const GroupDashboard: React.FC = () => {
           <div className="hero-header">
             <div className="hero-title-section">
               <h1 className="hero-title">
-                Welcome back, {currentUser?.username || 'User'}!
+                Welcome back, {currentUser?.name || currentUser?.username || 'User'}!
               </h1>
               <p className="hero-subtitle">
                 Manage your expense groups and track shared costs with ease

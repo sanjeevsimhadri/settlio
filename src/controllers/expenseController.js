@@ -207,7 +207,7 @@ const createExpense = asyncHandler(async (req, res, next) => {
     
     // Only populate paidBy if it exists (not email-only payer)
     if (expense.paidBy) {
-      populateFields.push({ path: 'paidBy', select: 'username email' });
+      populateFields.push({ path: 'paidBy', select: 'username email profilePhoto' });
     }
     
     await expense.populate(populateFields);
@@ -280,8 +280,8 @@ const getGroupExpenseSummary = async (groupId) => {
   try {
     // Get all expenses for the group
     const expenses = await Expense.find({ group: groupId })
-      .populate('paidBy', 'username email')
-      .populate('splitBetween', 'username email')
+      .populate('paidBy', 'username email profilePhoto')
+      .populate('splitBetween', 'username email profilePhoto')
       .sort({ date: -1 });
 
     // Calculate totals using aggregation - with error handling
@@ -303,7 +303,7 @@ const getGroupExpenseSummary = async (groupId) => {
     }
 
     // Calculate net balances for all group members
-    const group = await Group.findById(groupId).populate('members.userId', 'username email');
+    const group = await Group.findById(groupId).populate('members.userId', 'username email profilePhoto');
     const netBalances = {};
 
     // Initialize all members with 0 balance (include email-only members)

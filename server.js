@@ -19,8 +19,11 @@ const app = express();
 // Trust proxy for rate limiting (required when behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configure helmet to allow cross-origin images
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false
+}));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://your-production-domain.com'] 
@@ -43,8 +46,16 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static('uploads'));
+// Serve static files from uploads directory with explicit CORS headers
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for static files
+  res.header('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+    ? 'https://your-production-domain.com' 
+    : 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static('uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);

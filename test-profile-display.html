@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Photo Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ccc;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Profile Photo Display Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Direct Image Test</h2>
+        <p>Testing direct image load from backend:</p>
+        <img id="directImage" class="avatar" src="http://localhost:5000/uploads/profiles/profile-68e39240395f94edf74c897d-1759910049792.jpg" alt="Direct Profile Photo">
+        <div id="directResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. API User Data Test</h2>
+        <button onclick="testUserAPI()">Test User API</button>
+        <div id="apiResult" class="result"></div>
+        <div id="userPhotoContainer"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Dynamic Avatar Test</h2>
+        <button onclick="testDynamicAvatar()">Create Dynamic Avatar</button>
+        <div id="dynamicResult" class="result"></div>
+        <div id="dynamicAvatarContainer"></div>
+    </div>
+
+    <script>
+        // Test 1: Direct image load
+        document.getElementById('directImage').onload = function() {
+            document.getElementById('directResult').innerHTML = '<span class="success">✅ Direct image loaded successfully!</span>';
+        };
+        
+        document.getElementById('directImage').onerror = function() {
+            document.getElementById('directResult').innerHTML = '<span class="error">❌ Direct image failed to load</span>';
+        };
+
+        // Test 2: API user data
+        async function testUserAPI() {
+            const token = localStorage.getItem('token');
+            const resultDiv = document.getElementById('apiResult');
+            const photoContainer = document.getElementById('userPhotoContainer');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<span class="error">❌ No token found in localStorage</span>';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ User API successful!</span>`;
+                    
+                    if (data.data.profilePhoto) {
+                        const img = document.createElement('img');
+                        img.className = 'avatar';
+                        img.src = `http://localhost:5000${data.data.profilePhoto}`;
+                        img.alt = `${data.data.username} profile`;
+                        
+                        photoContainer.innerHTML = '<p>Profile photo from API:</p>';
+                        photoContainer.appendChild(img);
+                        
+                        img.onload = () => {
+                            resultDiv.innerHTML += '<br><span class="success">✅ API profile photo loaded successfully!</span>';
+                        };
+                        
+                        img.onerror = () => {
+                            resultDiv.innerHTML += '<br><span class="error">❌ API profile photo failed to load</span>';
+                        };
+                    } else {
+                        resultDiv.innerHTML += '<br><span class="info">ℹ️ No profile photo in user data</span>';
+                    }
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ API failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ API error: ${error.message}</span>`;
+            }
+        }
+
+        // Test 3: Dynamic avatar creation
+        function testDynamicAvatar() {
+            const resultDiv = document.getElementById('dynamicResult');
+            const container = document.getElementById('dynamicAvatarContainer');
+            
+            const img = new Image();
+            img.className = 'avatar';
+            
+            img.onload = function() {
+                resultDiv.innerHTML = '<span class="success">✅ Dynamic avatar loaded successfully!</span>';
+                container.innerHTML = '<p>Dynamic avatar:</p>';
+                container.appendChild(img);
+            };
+            
+            img.onerror = function() {
+                resultDiv.innerHTML = '<span class="error">❌ Dynamic avatar failed to load</span>';
+            };
+            
+            img.src = 'http://localhost:5000/uploads/profiles/profile-68e39240395f94edf74c897d-1759910049792.jpg?t=' + Date.now();
+        }
+    </script>
+</body>
+</html>

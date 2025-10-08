@@ -2,27 +2,33 @@
 .modern-member-grid {
   padding: 24px;
   display: grid;
-  gap: 16px;
+  gap: 20px;
+  grid-template-columns: 1fr;
 }
 
 .modern-member-balance-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.5);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 24px;
+  padding: 28px;
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: center;
+  gap: 24px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   animation: slideInLeft 0.5s ease-out both;
 }
 
 .modern-member-balance-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.modern-member-balance-card:hover .modern-member-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .modern-member-icon {
@@ -30,45 +36,71 @@
 }
 
 .modern-member-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid;
+  border: 3px solid;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .modern-member-avatar.positive {
-  background: rgba(5, 150, 105, 0.1);
-  border-color: rgba(5, 150, 105, 0.3);
+  background: rgba(5, 150, 105, 0.15);
+  border-color: rgba(5, 150, 105, 0.4);
   color: #059669;
 }
 
 .modern-member-avatar.negative {
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.4);
   color: #dc2626;
 }
 
 .modern-member-avatar.zero {
-  background: rgba(107, 114, 128, 0.1);
-  border-color: rgba(107, 114, 128, 0.3);
+  background: rgba(107, 114, 128, 0.15);
+  border-color: rgba(107, 114, 128, 0.4);
   color: #6b7280;
 }
 
 .member-avatar-inner {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 700;
-  border: 2px solid currentColor;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Profile photo specific styling */
+.member-avatar-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Fallback avatar styling */
+.avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
 }
 
 .modern-member-content {
@@ -92,7 +124,7 @@
 
 .member-name {
   margin: 0 0 8px 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: #1a202c;
   line-height: 1.3;
@@ -114,16 +146,16 @@
 }
 
 .modern-net-balance {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  padding: 12px 20px;
-  border-radius: 12px;
+  padding: 14px 24px;
+  border-radius: 16px;
   border: 2px solid;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   white-space: nowrap;
   text-align: center;
-  min-width: 120px;
+  min-width: 140px;
 }
 
 .modern-net-balance.positive {

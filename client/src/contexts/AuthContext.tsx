@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { User, LoginCredentials, RegisterCredentials } from '../types/auth';
 import { authAPI } from '../services/api';
+import { normalizeMobileForLogin } from '../utils/validation';
 
 // Define auth state interface
 interface AuthState {
@@ -143,22 +144,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Login function
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
+      console.log('🔄 AuthContext: Starting login process');
       dispatch({ type: 'AUTH_START' });
       
-      const response = await authAPI.login(credentials);
+      // Normalize the identifier (add +91 to Indian mobile numbers if needed)
+      const normalizedCredentials = {
+        ...credentials,
+        identifier: normalizeMobileForLogin(credentials.identifier)
+      };
+      
+      const response = await authAPI.login(normalizedCredentials);
+      console.log('🔄 AuthContext: Got response from API', { success: response.success });
       
       if (response.success) {
         // Store token in localStorage
+        console.log('💾 AuthContext: Storing token in localStorage');
         localStorage.setItem('token', response.token);
         
+        console.log('👤 AuthContext: Dispatching AUTH_SUCCESS with user:', response.data?.username);
         dispatch({
           type: 'AUTH_SUCCESS',
           payload: { user: response.data, token: response.token },
         });
       } else {
+        console.log('❌ AuthContext: Login response not successful');
         dispatch({ type: 'AUTH_FAILURE', payload: 'Login failed' });
       }
     } catch (error: any) {
+      console.error('💥 AuthContext: Login error:', error);
       const errorMessage = error.error || 'Login failed. Please try again.';
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;

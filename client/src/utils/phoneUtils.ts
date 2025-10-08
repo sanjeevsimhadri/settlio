@@ -60,7 +60,7 @@ export const formatPhoneNumber = (phone: string) => {
   // Remove all non-numeric characters except +
   const cleaned = phone.replace(/[^\d+]/g, '');
   
-  // If it starts with +, keep it, otherwise add +1 as default
+  // If it starts with +, keep it, otherwise add +91 as default (India)
   if (cleaned.startsWith('+')) {
     return cleaned;
   } else if (cleaned.length > 0) {
@@ -72,7 +72,7 @@ export const formatPhoneNumber = (phone: string) => {
 
 export const parsePhoneNumber = (phone: string) => {
   if (!phone.startsWith('+')) {
-    return { countryCode: '+1', number: phone };
+    return { countryCode: '+91', number: phone };
   }
   
   // Find matching country code
@@ -87,6 +87,6 @@ export const parsePhoneNumber = (phone: string) => {
     }
   }
   
-  // Default fallback
-  return { countryCode: '+1', number: phone.substring(1) };
+  // Default fallback to India
+  return { countryCode: '+91', number: phone.substring(1) };
 };

@@ -36,11 +36,14 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('🔐 Login attempt:', { identifier: data.identifier, passwordLength: data.password.length });
       setSubmitError('');
       await login(data);
+      console.log('✅ Login successful');
       reset();
       // Navigation will happen automatically via useEffect above
     } catch (error: any) {
+      console.error('❌ Login failed:', error);
       setSubmitError(error.error || 'Login failed. Please try again.');
     }
   };
@@ -54,17 +57,22 @@ const LoginForm: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-          {/* Email Field */}
-          <Input
-            label="Email Address"
-            type="email"
-            {...register('email')}
-            error={errors.email?.message}
-            placeholder="Enter your email"
-            autoComplete="email"
-            fullWidth
-            aria-describedby="email-help"
-          />
+          {/* Identifier Field */}
+          <div>
+            <Input
+              label="Email or Mobile Number"
+              type="text"
+              {...register('identifier')}
+              error={errors.identifier?.message}
+              placeholder="Enter email or 10-digit mobile number"
+              autoComplete="username"
+              fullWidth
+              aria-describedby="identifier-help"
+            />
+            <p id="identifier-help" className="input-help-text">
+              Enter your email address or 10-digit mobile number (e.g., 9494698235)
+            </p>
+          </div>
 
           {/* Password Field */}
           <Input

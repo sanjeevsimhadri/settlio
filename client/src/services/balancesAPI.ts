@@ -4,6 +4,12 @@ export interface Balance {
   memberEmail: string;
   memberUserId?: string;
   memberName: string;
+  memberUser?: {
+    _id: string;
+    username: string;
+    email: string;
+    profilePhoto?: string;
+  };
   balanceAmount: number;
   currency: string;
   status: 'active' | 'invited';
@@ -44,21 +50,25 @@ export interface Settlement {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   toUser?: {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   payer?: {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   payee?: {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   createdAt: string;
   createdBy?: string | { _id: string; username: string; email: string }; // User ID or User object
@@ -81,11 +91,13 @@ export interface DebtRelationship {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   to: {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   amount: number;
   currency: string;
@@ -96,6 +108,7 @@ export interface MemberBalance {
     _id: string;
     username: string;
     email: string;
+    profilePhoto?: string;
   };
   balance: number;
   owes: number;

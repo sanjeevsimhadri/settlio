@@ -18,16 +18,23 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [showCropper, setShowCropper] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isProcessing || isLoading) {
+      return;
+    }
+    
     const file = e.target.files?.[0];
     if (file) {
+      setIsProcessing(true);
       // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        setIsProcessing(false);
         return;
       }
       
@@ -38,6 +45,7 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        setIsProcessing(false);
         return;
       }
 
@@ -45,6 +53,8 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
       setShowCropper(true);
       setError(null);
       setSuccess(null);
+    } else {
+      setIsProcessing(false);
     }
   };
 
@@ -77,6 +87,7 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
       setIsLoading(false);
       setSelectedImage(null);
       setShowCropper(false);
+      setIsProcessing(false);
     }
   };
 
@@ -101,8 +112,19 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleUploadClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (isLoading || isProcessing) {
+      return;
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -120,9 +142,9 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
         <div className="profile-photo-display">
           <div className="profile-photo-avatar">
             {user?.profilePhoto ? (
-              <img src={`http://localhost:5000${user.profilePhoto}`} alt={user?.username || 'Profile'} />
+              <img src={`http://localhost:5000${user.profilePhoto}`} alt={user?.name || user?.username || 'Profile'} />
             ) : (
-              user?.username?.charAt(0).toUpperCase() || 'U'
+              user?.name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'
             )}
           </div>
           
@@ -140,7 +162,7 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
                 variant="primary"
                 onClick={handleUploadClick}
                 isLoading={isLoading}
-                disabled={isLoading}
+                disabled={isLoading || isProcessing}
               >
                 {user?.profilePhoto ? 'Change Photo' : 'Upload Photo'}
               </LoadingButton>
@@ -189,6 +211,7 @@ const ProfilePhotoForm: React.FC<ProfilePhotoFormProps> = ({ onSave }) => {
         onClose={() => {
           setShowCropper(false);
           setSelectedImage(null);
+          setIsProcessing(false);
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }

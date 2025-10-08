@@ -7,7 +7,7 @@ export interface LoadingButtonProps {
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'secondary' | 'danger' | 'success';
   size?: 'sm' | 'md' | 'lg';
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
   className?: string;
   loadingText?: string;
@@ -35,7 +35,16 @@ export const LoadingButton: React.FC<LoadingButtonProps> = ({
     <button
       type={type}
       className={`${baseClass} ${variantClass} ${sizeClass} ${disabledClass} ${className}`.trim()}
-      onClick={onClick}
+      onClick={(e) => {
+        // Only prevent default for non-submit buttons or when there's a custom onClick
+        if (type !== 'submit' || onClick) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        if (!isLoading && !disabled && onClick) {
+          onClick(e);
+        }
+      }}
       disabled={isLoading || disabled}
       aria-label={ariaLabel}
       aria-busy={isLoading}

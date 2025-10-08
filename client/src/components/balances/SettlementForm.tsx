@@ -5,7 +5,9 @@ import * as yup from 'yup';
 import { balancesAPI, Balance, CreateSettlementData } from '../../services/balancesAPI';
 import { Group } from '../../services/groupsAPI';
 import { Modal, Input, Select, TextArea, LoadingButton, Alert, Card, Badge, Avatar, useToast } from '../ui';
+import { getAvatarProps, getUserInitial } from '../../utils/profilePhotoUtils';
 import './Balances.css';
+import './ProfilePhotoAvatars.css';
 
 interface SettlementFormProps {
   group: Group;
@@ -168,7 +170,44 @@ const SettlementForm: React.FC<SettlementFormProps> = ({
         {/* Member Info Card */}
         <Card variant="filled" padding="medium">
           <div className="flex items-center gap-4">
-            <Avatar alt={memberBalance.memberName} size="large" />
+            <div style={{ width: '80px', height: '80px', position: 'relative' }}>
+              {memberBalance.memberUser?.profilePhoto ? (
+                <img 
+                  src={`http://localhost:5000${memberBalance.memberUser.profilePhoto}`} 
+                  alt={memberBalance.memberName}
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (fallback) {
+                      fallback.style.display = 'flex';
+                    }
+                  }}
+                />
+              ) : null}
+              <div 
+                className="avatar-fallback"
+                style={{ 
+                  display: memberBalance.memberUser?.profilePhoto ? 'none' : 'flex',
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  fontWeight: '600',
+                  backgroundColor: '#f3f4f6',
+                  borderRadius: '50%',
+                  color: '#374151'
+                }}
+              >
+                {memberBalance.memberName.charAt(0).toUpperCase()}
+              </div>
+            </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900">
                 {memberBalance.memberName}

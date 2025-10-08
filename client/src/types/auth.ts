@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   username: string;
+  name: string;
   email: string;
   mobile?: string;
   profilePhoto?: string;
@@ -9,13 +10,14 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  email: string;
+  identifier: string;
   password: string;
 }
 
 export interface RegisterCredentials {
-  username: string;
+  name: string;
   email: string;
+  mobile: string;
   password: string;
 }
 
@@ -27,6 +29,7 @@ export interface ChangePasswordCredentials {
 
 export interface UpdateProfileData {
   username?: string;
+  name?: string;
   email?: string;
   mobile?: string;
 }

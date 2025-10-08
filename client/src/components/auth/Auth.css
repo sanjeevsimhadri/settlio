@@ -188,6 +188,14 @@ button.auth-button-full {
   text-decoration: underline;
 }
 
+/* Help text for form inputs */
+.input-help-text {
+  font-size: 12px;
+  color: #666;
+  margin: 6px 0 0 0;
+  line-height: 1.4;
+}
+
 /* Password Requirements Styles */
 .password-requirements {
   background-color: #f8f9fa;

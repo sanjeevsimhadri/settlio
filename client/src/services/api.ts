@@ -61,9 +61,15 @@ export const authAPI = {
   // Login user
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
+      console.log('📡 Making login API call to:', `${API_BASE_URL}/auth/login`);
+      console.log('📧 Credentials:', { identifier: credentials.identifier, passwordLength: credentials.password.length });
+      
       const response: AxiosResponse<AuthResponse> = await api.post('/auth/login', credentials);
+      console.log('📥 Login API response:', { success: response.data.success, hasToken: !!response.data.token });
+      
       return response.data;
     } catch (error: any) {
+      console.error('💥 Login API error:', error.response?.data || error);
       throw error.response?.data || { success: false, error: 'Login failed' };
     }
   },

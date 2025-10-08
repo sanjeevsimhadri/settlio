@@ -81,8 +81,8 @@ const createGroup = asyncHandler(async (req, res, next) => {
 
     // Populate member userId references and admin details
     await group.populate([
-      { path: 'members.userId', select: 'username email' },
-      { path: 'admin', select: 'username email' }
+      { path: 'members.userId', select: 'username email profilePhoto' },
+      { path: 'admin', select: 'username email profilePhoto' }
     ]);
 
     res.status(201).json({
@@ -112,8 +112,8 @@ const getUserGroups = asyncHandler(async (req, res, next) => {
     const groups = await Group.find({
       'members.userId': userId
     }).populate([
-      { path: 'members.userId', select: 'username email' },
-      { path: 'admin', select: 'username email' }
+      { path: 'members.userId', select: 'username email profilePhoto' },
+      { path: 'admin', select: 'username email profilePhoto' }
     ])
     .sort({ updatedAt: -1 });
 
@@ -138,8 +138,8 @@ const getGroupById = asyncHandler(async (req, res, next) => {
 
   try {
     const group = await Group.findById(groupId).populate([
-      { path: 'members.userId', select: 'username email' },
-      { path: 'admin', select: 'username email' }
+      { path: 'members.userId', select: 'username email profilePhoto' },
+      { path: 'admin', select: 'username email profilePhoto' }
     ]);
 
     if (!group) {
@@ -206,8 +206,8 @@ const addGroupMember = asyncHandler(async (req, res, next) => {
 
     // Populate and return updated group
     await group.populate([
-      { path: 'members.userId', select: 'username email' },
-      { path: 'admin', select: 'username email' }
+      { path: 'members.userId', select: 'username email profilePhoto' },
+      { path: 'admin', select: 'username email profilePhoto' }
     ]);
 
     const message = userToAdd 
@@ -256,8 +256,8 @@ const removeGroupMember = asyncHandler(async (req, res, next) => {
 
       // Populate and return updated group
       await group.populate([
-        { path: 'members.userId', select: 'username email' },
-        { path: 'admin', select: 'username email' }
+        { path: 'members.userId', select: 'username email profilePhoto' },
+        { path: 'admin', select: 'username email profilePhoto' }
       ]);
 
       res.status(200).json({
@@ -307,7 +307,8 @@ const calculateSimplifiedDebtsFromBalances = (balanceMap, groupMembers) => {
     memberLookup.set(member.email, {
       _id: member.userId ? member.userId._id : member.email,
       username: member.userId ? member.userId.username : member.email.split('@')[0],
-      email: member.email
+      email: member.email,
+      profilePhoto: member.userId ? member.userId.profilePhoto : null
     });
   });
 
@@ -362,7 +363,7 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
 
   try {
     // Validate group exists and user has access
-    const group = await Group.findById(groupId).populate('members.userId', 'username email');
+    const group = await Group.findById(groupId).populate('members.userId', 'username email profilePhoto');
     if (!group) {
       return next(new ErrorResponse('Group not found', 404));
     }
@@ -378,8 +379,8 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
 
     // Get all expenses for the group
     const expenses = await Expense.find({ group: groupId })
-      .populate('paidByUserId', 'username email')
-      .populate('splitAmong.userId', 'username email')
+      .populate('paidByUserId', 'username email profilePhoto')
+      .populate('splitAmong.userId', 'username email profilePhoto')
       .sort({ date: -1 });
 
     // Calculate totals
@@ -388,8 +389,8 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
 
     // Get settlements before calculating balances (we need them for balance calculation)
     const settlements = await Settlement.find({ groupId: groupId })
-      .populate('fromUserId', 'username email')
-      .populate('toUserId', 'username email')
+      .populate('fromUserId', 'username email profilePhoto')
+      .populate('toUserId', 'username email profilePhoto')
       .sort({ createdAt: -1 })
       .exec();
 
@@ -471,7 +472,8 @@ const getGroupSummary = asyncHandler(async (req, res, next) => {
         user: {
           _id: member.userId ? member.userId._id : member.email,
           username: member.userId ? member.userId.username : email.split('@')[0],
-          email: email
+          email: email,
+          profilePhoto: member.userId ? member.userId.profilePhoto : null
         },
         owes: Number(owes.toFixed(2)),
         owed: Number(owed.toFixed(2)),

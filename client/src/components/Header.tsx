@@ -30,15 +30,15 @@ const Header: React.FC = () => {
 
         <div className="header-right">
           <div className="user-menu">
-            <span className="user-name">Hello, {user?.username}</span>
+            <span className="user-name">Hello, {user?.name || user?.username}</span>
             <div className="user-dropdown">
               <Avatar
                 src={user?.profilePhoto ? `http://localhost:5000${user.profilePhoto}` : undefined}
-                fallback={user?.username || 'U'}
+                fallback={user?.name?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase() || 'U'}
                 size="medium"
                 className="dropdown-button avatar-button header-avatar"
                 onClick={() => {}}
-                alt={`${user?.username} profile`}
+                alt={`${user?.name || user?.username} profile`}
               />
               <div className="dropdown-content" role="menu">
                 <Link to="/profile" className="dropdown-link" role="menuitem">
